@@ -1,5 +1,3 @@
-// backend/index.ts
-
 import express from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
@@ -194,10 +192,42 @@ function emitLeaderboard() {
 }
 
 function endRound() {
-	setTimeout(() => {
-		resetGameState();
-		tryStartGame();
-	}, 3000);
+	if (gamePlayers.player1 && gamePlayers.player2) {
+		// Swap roles
+		const tempDrawer = drawingUserSocketId;
+		drawingUserSocketId = guessingUserSocketId;
+		guessingUserSocketId = tempDrawer;
+
+		console.log("Roles switched!");
+		console.log("New Drawing user:", drawingUserSocketId);
+		console.log("New Guessing user:", guessingUserSocketId);
+
+		currentWord = selectRandomWord();
+		console.log("New word to draw:", currentWord);
+
+		io.emit("clear-canvas"); // Clear the canvas for the new turn
+
+		if (drawingUserSocketId) {
+			io.to(drawingUserSocketId).emit("start-drawing-turn");
+			io.to(drawingUserSocketId).emit("your-word", currentWord);
+		}
+		if (guessingUserSocketId) {
+			io.to(guessingUserSocketId).emit("start-guessing-turn");
+		}
+
+		io.emit("chat-message", {
+			username: "System",
+			message: "New round started! Roles have switched.",
+		});
+
+		startDrawingTimer(); // Start the timer for the new drawing turn
+	} else {
+		io.emit("chat-message", {
+			username: "System",
+			message: "Not enough players to start a new round.",
+		});
+		resetGameState(); // Optionally reset the game state if not enough players
+	}
 }
 
 function resetGameState() {
@@ -215,3 +245,16 @@ function resetGameState() {
 httpServer.listen(port, () => {
 	console.log(`Server listening on port ${port}`);
 });
+
+function appendChatMessage(data: { username: string; message: string }) {
+	const messageElement = document.createElement("div");
+	messageElement.textContent = `${data.username}: ${data.message}`;
+
+	// Highlight system messages for correct guesses
+	if (data.username === "System" && data.message.includes("guessed it!")) {
+		messageElement.classList.add("correct-guess"); // Add a CSS class for styling
+	}
+
+	chatMessages.appendChild(messageElement);
+	chatMessages.scrollTop = chatMessages.scrollHeight;
+}

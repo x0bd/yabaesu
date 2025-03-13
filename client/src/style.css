@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+.correct-guess {
+	color: green;
+	font-weight: bold;
+}

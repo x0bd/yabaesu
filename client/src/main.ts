@@ -177,6 +177,12 @@ chatInput.addEventListener("keypress", (event) => {
 function appendChatMessage(data: { username: string; message: string }) {
 	const messageElement = document.createElement("div");
 	messageElement.textContent = `${data.username}: ${data.message}`;
+
+	// Highlight system messages for correct guesses
+	if (data.username === "System" && data.message.includes("guessed it!")) {
+		messageElement.classList.add("correct-guess"); // Add a CSS class for styling
+	}
+
 	chatMessages.appendChild(messageElement);
 	chatMessages.scrollTop = chatMessages.scrollHeight;
 }

@@ -4,94 +4,201 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Draw & Guess</title>
-		<link href="./src/style.css" rel="stylesheet" />
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+			rel="stylesheet"
+		/>
+		<style>
+			@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap");
+			body {
+				font-family: "Inter", sans-serif;
+			}
+			.transform-skew {
+				transform: skew(-2deg);
+			}
+			.hover-scale {
+				transition: transform 0.2s, box-shadow 0.2s;
+			}
+			.hover-scale:hover {
+				transform: skew(-2deg) scale(1.02);
+			}
+			.hover-scale:active {
+				transform: skew(-2deg) translate(2px, 2px);
+			}
+			.grid-pattern {
+				background-image: linear-gradient(
+						to right,
+						rgba(0, 0, 0, 0.1) 1px,
+						transparent 1px
+					),
+					linear-gradient(
+						to bottom,
+						rgba(0, 0, 0, 0.1) 1px,
+						transparent 1px
+					);
+				background-size: 20px 20px;
+			}
+		</style>
 	</head>
-	<body class="bg-gray-100 h-screen flex items-center justify-center">
-		<div id="login-container" class="bg-white p-8 rounded shadow-md w-96">
-			<h2 class="text-2xl font-semibold mb-4">Join the Game</h2>
-			<div class="mb-4">
+	<body
+		class="h-screen flex items-center justify-center bg-gray-100 grid-pattern"
+	>
+		<div
+			id="login-container"
+			class="bg-white border-2 border-black shadow-none p-8 rounded-none w-96 transform-skew"
+			style="box-shadow: 6px 6px 0 #000"
+		>
+			<div class="mb-1 flex items-center">
+				<span
+					class="bg-red-600 h-3 w-3 rounded-full inline-block mr-2"
+				></span>
+				<h2 class="text-2xl font-black tracking-tighter uppercase mb-4">
+					ドロー &amp; ゲス
+				</h2>
+			</div>
+			<div class="mb-6 border-t-2 border-b-2 border-black py-2">
 				<label
 					for="username"
-					class="block text-gray-700 text-sm font-bold mb-2"
-					>Username:</label
+					class="block text-black text-sm font-bold mb-2 uppercase"
+					>Username</label
 				>
 				<input
 					type="text"
 					id="username"
-					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+					class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black transform-skew"
 					placeholder="Enter your username"
 				/>
 			</div>
 			<button
 				id="login-button"
-				class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+				class="bg-black hover:bg-gray-800 text-white font-black py-3 px-4 rounded-none focus:outline-none w-full uppercase transform-skew hover-scale"
+				style="box-shadow: 6px 6px 0 #ff0000"
 			>
-				Play
+				PLAY
 			</button>
-			<p id="login-error" class="text-red-500 text-xs italic mt-2 hidden">
+			<p
+				id="login-error"
+				class="text-red-600 text-sm mt-2 hidden font-bold uppercase"
+			>
 				Username cannot be empty.
 			</p>
 		</div>
 
 		<div
 			id="game-container"
-			class="bg-white p-8 rounded shadow-md w-full max-w-4xl hidden flex flex-col"
+			class="bg-white border-2 border-black p-6 rounded-none w-full max-w-4xl hidden flex flex-col transform-skew"
+			style="box-shadow: 6px 6px 0 #000"
 		>
-			<div class="flex justify-between items-center mb-4">
-				<h1 class="text-xl font-semibold">Draw & Guess</h1>
-				<div id="timer" class="text-lg font-bold text-gray-700">
-					Time: --
+			<div
+				class="flex justify-between items-center mb-6 border-b-2 border-black pb-2"
+			>
+				<div class="flex items-center">
+					<span
+						class="bg-red-600 h-3 w-3 rounded-full inline-block mr-2"
+					></span>
+					<h1 class="text-xl font-black tracking-tighter uppercase">
+						ドロー &amp; ゲス
+					</h1>
+				</div>
+				<div
+					id="timer"
+					class="text-lg font-black text-black bg-yellow-300 px-3 border-2 border-black transform-skew"
+				>
+					TIME: --
 				</div>
 			</div>
 
 			<div class="flex flex-grow">
 				<canvas
 					id="drawing-canvas"
-					class="border rounded bg-white flex-grow mr-4"
+					class="border-2 border-black rounded-none bg-white flex-grow mr-4 transform-skew"
 					width="600"
 					height="400"
+					style="box-shadow: 6px 6px 0 #000"
 				></canvas>
 				<div class="flex flex-col w-96">
 					<div
 						id="chat-container"
-						class="border rounded p-2 mb-2 h-64 overflow-y-auto"
+						class="border-2 border-black rounded-none p-3 mb-3 h-64 overflow-y-auto transform-skew"
+						style="box-shadow: 6px 6px 0 #000"
 					>
-						<div id="chat-messages"></div>
-						<div class="mt-2">
+						<div class="flex items-center mb-2">
+							<span
+								class="bg-blue-600 h-3 w-3 rounded-full inline-block mr-2"
+							></span>
+							<span class="font-bold uppercase text-sm"
+								>チャット / CHAT</span
+							>
+						</div>
+						<div
+							id="chat-messages"
+							class="border-t-2 border-black pt-2"
+						></div>
+						<div class="mt-3">
 							<input
 								type="text"
 								id="chat-input"
-								class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-								placeholder="Chat..."
+								class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black transform-skew"
+								placeholder="Type your message..."
 							/>
 							<button
 								id="send-chat-button"
-								class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-2"
+								class="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-4 rounded-none focus:outline-none mt-2 w-full uppercase transform-skew hover-scale"
+								style="box-shadow: 4px 4px 0 #000"
 							>
-								Send
+								SEND
 							</button>
 						</div>
 					</div>
-					<div id="guessing-container" class="border rounded p-2">
+					<div
+						id="guessing-container"
+						class="border-2 border-black rounded-none p-3 transform-skew"
+						style="box-shadow: 6px 6px 0 #000"
+					>
+						<div class="flex items-center mb-2">
+							<span
+								class="bg-green-600 h-3 w-3 rounded-full inline-block mr-2"
+							></span>
+							<span class="font-bold uppercase text-sm"
+								>予想 / GUESS</span
+							>
+						</div>
 						<input
 							type="text"
 							id="guess-input"
-							class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-							placeholder="Your guess..."
+							class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black transform-skew"
+							placeholder="Enter your guess..."
 						/>
 						<button
 							id="submit-guess-button"
-							class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-2"
+							class="bg-green-600 hover:bg-green-700 text-white font-black py-2 px-4 rounded-none focus:outline-none mt-2 w-full uppercase transform-skew hover-scale"
+							style="box-shadow: 4px 4px 0 #000"
 						>
-							Guess
+							GUESS
 						</button>
 					</div>
 				</div>
 			</div>
 
-			<div id="leaderboard-container" class="mt-4 border rounded p-4">
-				<h2 class="text-lg font-semibold mb-2">Leaderboard</h2>
-				<ul id="leaderboard-list"></ul>
+			<div
+				id="leaderboard-container"
+				class="mt-4 border-2 border-black rounded-none p-4 transform-skew"
+				style="box-shadow: 6px 6px 0 #000"
+			>
+				<div class="flex items-center mb-2">
+					<span
+						class="bg-purple-600 h-3 w-3 rounded-full inline-block mr-2"
+					></span>
+					<h2
+						class="text-lg font-black tracking-tighter uppercase mb-2"
+					>
+						リーダーボード / LEADERBOARD
+					</h2>
+				</div>
+				<ul
+					id="leaderboard-list"
+					class="border-t-2 border-black pt-2"
+				></ul>
 			</div>
 		</div>
 
