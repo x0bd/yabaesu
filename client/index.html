@@ -1,13 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Draw & Guess</title>
 		<link href="./src/style.css" rel="stylesheet" />
 	</head>
-	<body>
-		<h1 class="text-3xl font-bold text-emerald-500 underline">
-			Hello world!
-		</h1>
+	<body class="bg-gray-100 h-screen flex items-center justify-center">
+		<div id="login-container" class="bg-white p-8 rounded shadow-md w-96">
+			<h2 class="text-2xl font-semibold mb-4">Join the Game</h2>
+			<div class="mb-4">
+				<label
+					for="username"
+					class="block text-gray-700 text-sm font-bold mb-2"
+					>Username:</label
+				>
+				<input
+					type="text"
+					id="username"
+					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+					placeholder="Enter your username"
+				/>
+			</div>
+			<button
+				id="login-button"
+				class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+			>
+				Play
+			</button>
+			<p id="login-error" class="text-red-500 text-xs italic mt-2 hidden">
+				Username cannot be empty.
+			</p>
+		</div>
+
+		<div
+			id="game-container"
+			class="bg-white p-8 rounded shadow-md w-full max-w-4xl hidden flex flex-col"
+		>
+			<div class="flex justify-between items-center mb-4">
+				<h1 class="text-xl font-semibold">Draw & Guess</h1>
+				<div id="timer" class="text-lg font-bold text-gray-700">
+					Time: --
+				</div>
+			</div>
+
+			<div class="flex flex-grow">
+				<canvas
+					id="drawing-canvas"
+					class="border rounded bg-white flex-grow mr-4"
+					width="600"
+					height="400"
+				></canvas>
+				<div class="flex flex-col w-96">
+					<div
+						id="chat-container"
+						class="border rounded p-2 mb-2 h-64 overflow-y-auto"
+					>
+						<div id="chat-messages"></div>
+						<div class="mt-2">
+							<input
+								type="text"
+								id="chat-input"
+								class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+								placeholder="Chat..."
+							/>
+							<button
+								id="send-chat-button"
+								class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-2"
+							>
+								Send
+							</button>
+						</div>
+					</div>
+					<div id="guessing-container" class="border rounded p-2">
+						<input
+							type="text"
+							id="guess-input"
+							class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+							placeholder="Your guess..."
+						/>
+						<button
+							id="submit-guess-button"
+							class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-2"
+						>
+							Guess
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div id="leaderboard-container" class="mt-4 border rounded p-4">
+				<h2 class="text-lg font-semibold mb-2">Leaderboard</h2>
+				<ul id="leaderboard-list"></ul>
+			</div>
+		</div>
+
+		<script type="module" src="./src/main.ts"></script>
 	</body>
 </html>
