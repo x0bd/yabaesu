@@ -1,7 +1,5 @@
 // backend/index.ts
 
-// backend/index.ts
-
 import express from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
@@ -29,10 +27,25 @@ let drawingUserSocketId: string | null = null;
 let guessingUserSocketId: string | null = null;
 let currentWord: string | null = null;
 let drawingTimerInterval: NodeJS.Timeout | null = null;
-const drawingTimeLimit = 10; // seconds
+const drawingTimeLimit = 100; // seconds
 let timeRemaining: number = drawingTimeLimit;
 const leaderboard: Array<{ username: string; wins: number }> = [];
 // --- End Game State ---
+
+// --- Word List ---
+const words = [
+	"apple",
+	"banana",
+	"car",
+	"dog",
+	"flower",
+	"house",
+	"sun",
+	"tree",
+	"book",
+	"computer",
+];
+// --- End Word List ---
 
 // Serve static files
 const frontendBuildPath = path.join(__dirname, "..", "client", "dist");
@@ -73,11 +86,24 @@ io.on("connection", (socket) => {
 
 	socket.on("guess", (data) => {
 		console.log(`User ${data.username} guessed: ${data.guess}`);
-		io.emit("chat-message", {
-			username: "System",
-			message: `${data.username} guessed: ${data.guess}`,
-		});
-		// We'll add guess checking logic later
+		const guess = data.guess.trim().toLowerCase();
+		if (currentWord && guess === currentWord.toLowerCase()) {
+			const guessingUser = connectedUsers.get(socket.id);
+			if (guessingUser) {
+				io.emit("chat-message", {
+					username: "System",
+					message: `${guessingUser} guessed it! The word was "${currentWord}".`,
+				});
+				updateLeaderboard(guessingUser);
+				emitLeaderboard();
+				endRound();
+			}
+		} else {
+			io.emit("chat-message", {
+				username: data.username,
+				message: data.guess,
+			});
+		}
 	});
 });
 
@@ -110,14 +136,20 @@ function chooseInitialDrawer() {
 		console.log("Drawing user:", drawingUserSocketId);
 		console.log("Guessing user:", guessingUserSocketId);
 
+		currentWord = selectRandomWord();
+		console.log("Word to draw:", currentWord);
+
+		// Emit clear canvas event to all clients at the start of a new game
+		io.emit("clear-canvas");
+
 		if (drawingUserSocketId) {
 			io.to(drawingUserSocketId).emit("start-drawing-turn");
+			io.to(drawingUserSocketId).emit("your-word", currentWord);
 		}
 		if (guessingUserSocketId) {
 			io.to(guessingUserSocketId).emit("start-guessing-turn");
 		}
 
-		// Start the drawing timer
 		startDrawingTimer();
 	}
 }
@@ -130,17 +162,42 @@ function startDrawingTimer() {
 
 	drawingTimerInterval = setInterval(() => {
 		timeRemaining--;
-		io.emit("timer-update", timeRemaining); // Send timer update to all clients
+		io.emit("timer-update", timeRemaining);
 
 		if (timeRemaining <= 0) {
 			clearInterval(drawingTimerInterval);
 			drawingTimerInterval = null;
-			console.log("Drawing time ended!");
-			io.emit("drawing-time-ended"); // Notify clients the time is up
-			// Here we would typically switch turns and potentially reveal the word
-			// We'll implement turn switching logic in the next step
+			console.log("Drawing time ended! The word was:", currentWord);
+			io.emit("drawing-time-ended");
+			endRound();
 		}
 	}, 1000);
+}
+
+function selectRandomWord(): string {
+	const randomIndex = Math.floor(Math.random() * words.length);
+	return words[randomIndex];
+}
+
+function updateLeaderboard(username: string) {
+	const player = leaderboard.find((entry) => entry.username === username);
+	if (player) {
+		player.wins++;
+	} else {
+		leaderboard.push({ username, wins: 1 });
+	}
+}
+
+function emitLeaderboard() {
+	leaderboard.sort((a, b) => b.wins - a.wins);
+	io.emit("leaderboard-update", leaderboard);
+}
+
+function endRound() {
+	setTimeout(() => {
+		resetGameState();
+		tryStartGame();
+	}, 3000);
 }
 
 function resetGameState() {

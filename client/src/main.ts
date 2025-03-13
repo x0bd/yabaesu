@@ -26,7 +26,7 @@ const guessInput = document.getElementById("guess-input") as HTMLInputElement;
 const submitGuessButton = document.getElementById(
 	"submit-guess-button"
 ) as HTMLButtonElement;
-const timerDisplay = document.getElementById("timer") as HTMLDivElement; // Get the timer display element
+const timerDisplay = document.getElementById("timer") as HTMLDivElement;
 const leaderboardList = document.getElementById(
 	"leaderboard-list"
 ) as HTMLUListElement;
@@ -75,19 +75,24 @@ socket.on("start-guessing-turn", () => {
 		isDrawingEnabled = false;
 		guessInput.disabled = false;
 		submitGuessButton.disabled = false;
+		clearCanvas();
 	}
 });
 
-// --- Timer Display ---
 socket.on("timer-update", (time: number) => {
 	timerDisplay.textContent = `Time: ${time}`;
 });
 
 socket.on("drawing-time-ended", () => {
-	alert("Time is up!"); // You can replace this with a more user-friendly UI update
-	// Here we might want to show the word or handle the end of the turn
+	alert("Time is up!");
+	clearCanvas();
 });
-// --- End Timer Display ---
+
+socket.on("your-word", (word: string) => {
+	if (username) {
+		alert(`${username}, your word is: ${word}`);
+	}
+});
 
 loginButton.addEventListener("click", () => {
 	const enteredUsername = usernameInput.value.trim();
@@ -101,6 +106,7 @@ loginButton.addEventListener("click", () => {
 		if (socket.connected) {
 			socket.emit("user-joined", username);
 		}
+		clearCanvas(); // Add this line to clear the canvas when the game container is shown
 	} else {
 		loginError.classList.remove("hidden");
 	}
