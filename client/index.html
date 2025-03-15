@@ -8,12 +8,14 @@
 			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
 			rel="stylesheet"
 		/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
 		<style>
 			@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&family=Mochiy+Pop+One&display=swap");
 
 			body {
 				font-family: "Geist Mono", monospace;
+				overflow: hidden;
 			}
 
 			.title-font {
@@ -46,11 +48,126 @@
 					);
 				background-size: 20px 20px;
 			}
+
+			.notification {
+				position: fixed;
+				top: 20px;
+				left: 50%;
+				transform: translateX(-50%) skew(-2deg);
+				padding: 12px 20px;
+				background-color: white;
+				border: 2px solid black;
+				box-shadow: 6px 6px 0 #000;
+				z-index: 1000;
+				opacity: 0;
+				pointer-events: none;
+				font-weight: bold;
+				text-transform: uppercase;
+			}
+
+			.word-display {
+				position: absolute;
+				top: -50px;
+				left: 50%;
+				transform: translateX(-50%) skew(-2deg);
+				background-color: #fde047;
+				padding: 8px 16px;
+				border: 2px solid black;
+				box-shadow: 4px 4px 0 #000;
+				font-weight: bold;
+				text-transform: uppercase;
+				transition: top 0.3s ease;
+			}
+
+			.word-display.active {
+				top: 10px;
+			}
+
+			.game-status {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%) skew(-2deg);
+				padding: 30px;
+				background-color: white;
+				border: 2px solid black;
+				box-shadow: 8px 8px 0 #000;
+				z-index: 1000;
+				opacity: 0;
+				pointer-events: none;
+				text-align: center;
+				width: 300px;
+			}
+
+			.game-status h2 {
+				font-size: 24px;
+				margin-bottom: 16px;
+				text-transform: uppercase;
+			}
+
+			.game-status p {
+				margin-bottom: 20px;
+			}
+
+			.game-status button {
+				background-color: #000;
+				color: white;
+				padding: 10px 20px;
+				border: none;
+				box-shadow: 4px 4px 0 #ff0000;
+				text-transform: uppercase;
+				font-weight: bold;
+				cursor: pointer;
+			}
+
+			.rainbow-text {
+				background: linear-gradient(
+					to right,
+					red,
+					orange,
+					yellow,
+					green,
+					blue,
+					indigo,
+					violet
+				);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				font-weight: bold;
+			}
+
+			.correct-guess {
+				color: green;
+				font-weight: bold;
+			}
+
+			.turn-indicator {
+				position: absolute;
+				left: 50%;
+				transform: translateX(-50%);
+				top: 10px;
+				padding: 8px 16px;
+				border: 2px solid black;
+				background-color: #93c5fd;
+				font-weight: bold;
+				text-transform: uppercase;
+				box-shadow: 4px 4px 0 #000;
+			}
 		</style>
 	</head>
 	<body
 		class="h-screen flex items-center justify-center bg-gray-100 grid-pattern"
 	>
+		<!-- Notification Element -->
+		<div id="notification" class="notification"></div>
+
+		<!-- Game Status Modal -->
+		<div id="game-status" class="game-status">
+			<h2 id="status-title">Game Status</h2>
+			<p id="status-message">Status message here</p>
+			<button id="status-button">OK</button>
+		</div>
+
 		<div
 			id="login-container"
 			class="bg-white border-2 border-black shadow-none p-8 rounded-none w-96 transform-skew"
@@ -108,6 +225,9 @@
 						ヤベス
 					</h1>
 				</div>
+				<div id="turn-indicator" class="turn-indicator hidden">
+					WAITING FOR PLAYERS
+				</div>
 				<div
 					id="timer"
 					class="text-lg font-bold text-black bg-yellow-300 px-3 border-2 border-black transform-skew"
@@ -116,7 +236,10 @@
 				</div>
 			</div>
 
-			<div class="flex flex-grow">
+			<div class="flex flex-grow relative">
+				<div id="word-display" class="word-display">
+					YOUR WORD: <span id="word-text"></span>
+				</div>
 				<canvas
 					id="drawing-canvas"
 					class="border-2 border-black rounded-none bg-white flex-grow mr-4 transform-skew"

@@ -1,6 +1,113 @@
 @import "tailwindcss";
 
+/* Base styles for correct guesses */
 .correct-guess {
 	color: green;
 	font-weight: bold;
+	animation: pulse 1s ease-in-out;
+}
+
+/* Rainbow text effect for special messages */
+.rainbow-text {
+	background: linear-gradient(
+		to right,
+		#ff0000,
+		#ffa500,
+		#ffff00,
+		#008000,
+		#0000ff,
+		#4b0082,
+		#ee82ee
+	);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	background-size: 200% auto;
+	animation: rainbow 2s linear infinite;
+}
+
+/* Chat message animations */
+.chat-message-enter {
+	opacity: 0;
+	transform: translateY(10px);
+}
+
+/* Leaderboard animations */
+.leaderboard-item {
+	transition: all 0.3s ease;
+}
+
+.leaderboard-item:hover {
+	transform: translateX(5px);
+}
+
+/* Canvas drawing effect */
+.canvas-active {
+	box-shadow: 0 0 10px rgba(0, 0, 255, 0.5);
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes rainbow {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+@keyframes bounce {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-10px);
+	}
+}
+
+@keyframes shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-5px);
+	}
+	75% {
+		transform: translateX(5px);
+	}
+}
+
+/* Timer urgency */
+.timer-urgent {
+	animation: shake 0.5s infinite;
+	color: #ffffff;
+	background-color: #ef4444 !important;
+}
+
+/* Word display animations */
+.word-reveal {
+	animation: bounce 0.5s ease;
+}
+
+/* Button interactions */
+button:active {
+	transform: translate(2px, 2px);
+	box-shadow: 4px 4px 0 transparent !important;
 }
