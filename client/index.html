@@ -3,16 +3,24 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Draw & Guess</title>
+		<title>ヤベス | Silly Draw & Guess Game</title>
 		<link
 			href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
 			rel="stylesheet"
 		/>
+
 		<style>
-			@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap");
+			@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&family=Mochiy+Pop+One&display=swap");
+
 			body {
-				font-family: "Inter", sans-serif;
+				font-family: "Geist Mono", monospace;
 			}
+
+			.title-font {
+				font-family: "M PLUS 1 Code", monospace;
+				font-weight: 800;
+			}
+
 			.transform-skew {
 				transform: skew(-2deg);
 			}
@@ -52,8 +60,8 @@
 				<span
 					class="bg-red-600 h-3 w-3 rounded-full inline-block mr-2"
 				></span>
-				<h2 class="text-2xl font-black tracking-tighter uppercase mb-4">
-					ドロー &amp; ゲス
+				<h2 class="text-2xl title-font tracking-tighter uppercase mb-4">
+					ヤベス
 				</h2>
 			</div>
 			<div class="mb-6 border-t-2 border-b-2 border-black py-2">
@@ -71,7 +79,7 @@
 			</div>
 			<button
 				id="login-button"
-				class="bg-black hover:bg-gray-800 text-white font-black py-3 px-4 rounded-none focus:outline-none w-full uppercase transform-skew hover-scale"
+				class="bg-black hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-none focus:outline-none w-full uppercase transform-skew hover-scale"
 				style="box-shadow: 6px 6px 0 #ff0000"
 			>
 				PLAY
@@ -86,7 +94,7 @@
 
 		<div
 			id="game-container"
-			class="bg-white border-2 border-black p-6 rounded-none w-full max-w-4xl hidden flex flex-col transform-skew"
+			class="bg-white border-2 border-black p-6 rounded-none w-full max-w-5xl hidden flex flex-col transform-skew"
 			style="box-shadow: 6px 6px 0 #000"
 		>
 			<div
@@ -96,13 +104,13 @@
 					<span
 						class="bg-red-600 h-3 w-3 rounded-full inline-block mr-2"
 					></span>
-					<h1 class="text-xl font-black tracking-tighter uppercase">
-						ドロー &amp; ゲス
+					<h1 class="text-2xl title-font tracking-tighter uppercase">
+						ヤベス
 					</h1>
 				</div>
 				<div
 					id="timer"
-					class="text-lg font-black text-black bg-yellow-300 px-3 border-2 border-black transform-skew"
+					class="text-lg font-bold text-black bg-yellow-300 px-3 border-2 border-black transform-skew"
 				>
 					TIME: --
 				</div>
@@ -112,8 +120,8 @@
 				<canvas
 					id="drawing-canvas"
 					class="border-2 border-black rounded-none bg-white flex-grow mr-4 transform-skew"
-					width="600"
-					height="400"
+					width="700"
+					height="450"
 					style="box-shadow: 6px 6px 0 #000"
 				></canvas>
 				<div class="flex flex-col w-96">
@@ -143,7 +151,7 @@
 							/>
 							<button
 								id="send-chat-button"
-								class="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-4 rounded-none focus:outline-none mt-2 w-full uppercase transform-skew hover-scale"
+								class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-none focus:outline-none mt-2 w-full uppercase transform-skew hover-scale"
 								style="box-shadow: 4px 4px 0 #000"
 							>
 								SEND
@@ -171,7 +179,7 @@
 						/>
 						<button
 							id="submit-guess-button"
-							class="bg-green-600 hover:bg-green-700 text-white font-black py-2 px-4 rounded-none focus:outline-none mt-2 w-full uppercase transform-skew hover-scale"
+							class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-none focus:outline-none mt-2 w-full uppercase transform-skew hover-scale"
 							style="box-shadow: 4px 4px 0 #000"
 						>
 							GUESS
@@ -190,7 +198,7 @@
 						class="bg-purple-600 h-3 w-3 rounded-full inline-block mr-2"
 					></span>
 					<h2
-						class="text-lg font-black tracking-tighter uppercase mb-2"
+						class="text-lg title-font tracking-tighter uppercase mb-2"
 					>
 						リーダーボード / LEADERBOARD
 					</h2>
