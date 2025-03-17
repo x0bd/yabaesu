@@ -43,7 +43,6 @@ const words = [
 	"book",
 	"computer",
 ];
-// --- End Word List ---
 
 // Serve static files
 const frontendBuildPath = path.join(__dirname, "..", "client", "dist");
