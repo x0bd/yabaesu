@@ -160,6 +160,7 @@ socket.on("drawing-time-ended", () => {
 });
 
 socket.on("your-word", (word: string) => {
+	console.log("Received word to draw:", word);
 	if (username) {
 		// Show the word in the word display area with animation
 		wordText.textContent = word;
@@ -176,6 +177,57 @@ socket.on("your-word", (word: string) => {
 			scale: 1.1,
 			color: "#ff0000",
 			duration: 0.3,
+			repeat: 1,
+			yoyo: true,
+		});
+	}
+});
+
+socket.on("start-drawing-turn", () => {
+	if (username) {
+		showGameStatus(
+			"Your Turn to Draw!",
+			"Draw the word shown at the top of the screen!",
+			"Ready"
+		);
+		isDrawingEnabled = true;
+		guessInput.disabled = true;
+		submitGuessButton.disabled = true;
+		clearCanvas();
+
+		// Update turn indicator
+		turnIndicator.textContent = "YOUR TURN TO DRAW";
+		turnIndicator.style.backgroundColor = "#fde047"; // Yellow
+		gsap.fromTo(
+			turnIndicator,
+			{ opacity: 0, y: -20 },
+			{ opacity: 1, y: 0, duration: 0.5, ease: "back.out" }
+		);
+		turnIndicator.classList.remove("hidden");
+	}
+});
+
+socket.on("your-word", (word: string) => {
+	console.log("Received word to draw:", word);
+	if (username) {
+		// Update the word display
+		wordText.textContent = word;
+		wordDisplay.classList.add("active");
+
+		// Also show a notification with the word
+		showNotification(`Your word to draw is: ${word}`, "green");
+
+		// Add animations
+		gsap.fromTo(
+			wordDisplay,
+			{ y: -50, opacity: 0 },
+			{ y: 0, opacity: 1, duration: 0.5, ease: "back.out" }
+		);
+
+		gsap.to(wordText, {
+			scale: 1.1,
+			color: "#ff0000",
+			duration: 1,
 			repeat: 1,
 			yoyo: true,
 		});
