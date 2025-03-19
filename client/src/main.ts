@@ -83,6 +83,15 @@ socket.on("connected-users", (users: string) => {
 
 socket.on("start-drawing-turn", () => {
 	if (username) {
+		// Reset timer to original state
+		gsap.to(timerDisplay, {
+			backgroundColor: "#fde047", // Original yellow color
+			color: "black",
+			scale: 1,
+			duration: 0.3,
+		});
+
+		// Existing code...
 		showGameStatus(
 			"Your Turn to Draw!",
 			"Draw the word you've been given!",
@@ -92,6 +101,9 @@ socket.on("start-drawing-turn", () => {
 		guessInput.disabled = true;
 		submitGuessButton.disabled = true;
 		clearCanvas();
+
+		// Make sure the word display is visible when it's the drawing turn
+		wordDisplay.classList.add("active");
 
 		// Update turn indicator
 		turnIndicator.textContent = "YOUR TURN TO DRAW";
@@ -107,6 +119,15 @@ socket.on("start-drawing-turn", () => {
 
 socket.on("start-guessing-turn", () => {
 	if (username) {
+		// Reset timer to original state
+		gsap.to(timerDisplay, {
+			backgroundColor: "#fde047", // Original yellow color
+			color: "black",
+			scale: 1,
+			duration: 0.3,
+		});
+
+		// Existing code...
 		showGameStatus(
 			"Your Turn to Guess!",
 			"Try to guess what's being drawn!",
@@ -116,6 +137,9 @@ socket.on("start-guessing-turn", () => {
 		guessInput.disabled = false;
 		submitGuessButton.disabled = false;
 		clearCanvas();
+
+		// Hide the word display when it's the guessing turn
+		wordDisplay.classList.remove("active");
 
 		// Update turn indicator
 		turnIndicator.textContent = "YOUR TURN TO GUESS";
@@ -156,6 +180,15 @@ socket.on("drawing-time-ended", () => {
 		duration: 0.3,
 		yoyo: true,
 		repeat: 1,
+		onComplete: () => {
+			// Reset timer back to original state after animation
+			gsap.to(timerDisplay, {
+				backgroundColor: "#fde047", // Original yellow color
+				color: "black",
+				scale: 1,
+				duration: 0.3,
+			});
+		},
 	});
 });
 
@@ -185,9 +218,18 @@ socket.on("your-word", (word: string) => {
 
 socket.on("start-drawing-turn", () => {
 	if (username) {
+		// Reset timer to original state
+		gsap.to(timerDisplay, {
+			backgroundColor: "#fde047", // Original yellow color
+			color: "black",
+			scale: 1,
+			duration: 0.3,
+		});
+
+		// Existing code...
 		showGameStatus(
 			"Your Turn to Draw!",
-			"Draw the word shown at the top of the screen!",
+			"Draw the word you've been given!",
 			"Ready"
 		);
 		isDrawingEnabled = true;
@@ -209,7 +251,9 @@ socket.on("start-drawing-turn", () => {
 
 socket.on("your-word", (word: string) => {
 	console.log("Received word to draw:", word);
-	if (username) {
+
+	// Only show the word if the user is currently in drawing mode
+	if (username && isDrawingEnabled) {
 		// Update the word display
 		wordText.textContent = word;
 		wordDisplay.classList.add("active");
@@ -231,6 +275,9 @@ socket.on("your-word", (word: string) => {
 			repeat: 1,
 			yoyo: true,
 		});
+	} else {
+		// Hide the word display for guessing players
+		wordDisplay.classList.remove("active");
 	}
 });
 
