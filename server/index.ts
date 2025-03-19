@@ -31,18 +31,7 @@ const leaderboard: Array<{ username: string; wins: number }> = [];
 // --- End Game State ---
 
 // --- Word List ---
-const words = [
-	"apple",
-	"banana",
-	"car",
-	"dog",
-	"flower",
-	"house",
-	"sun",
-	"tree",
-	"book",
-	"computer",
-];
+const words = ["fish"];
 
 // Serve static files
 const frontendBuildPath = path.join(__dirname, "..", "client", "dist");
