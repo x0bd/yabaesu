@@ -11,3 +11,4 @@ const leaderboard: Array<{ username: string; wins: number }> = [];
 -   [ ] Add Color Swatches
 -   [x] Add Animated Text Effects with GSAP
 -   [ ] Fix Game Errors
+-   [ ] Add Zustand and not React, React rewrite will be brutal
