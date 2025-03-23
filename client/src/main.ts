@@ -49,6 +49,13 @@ const turnIndicator = document.getElementById(
 	"turn-indicator"
 ) as HTMLDivElement;
 
+// Update the wordDisplayLabel to "YOUR PREVIOUS WORD: "
+const wordDisplayLabel = document.querySelector(".word-display") as HTMLElement;
+if (wordDisplayLabel) {
+	wordDisplayLabel.innerHTML =
+		'YOUR PREVIOUS WORD: <span id="word-text"></span>';
+}
+
 // Drawing variables
 let isDrawing = false;
 let lastX = 0;
@@ -179,6 +186,7 @@ subscribe(
 	}
 );
 
+// Updated to handle the current word
 subscribe(
 	(state) => state.currentWord,
 	(word) => {
@@ -199,6 +207,23 @@ subscribe(
 				repeat: 1,
 				yoyo: true,
 			});
+		}
+	}
+);
+
+// New subscription for previous word
+subscribe(
+	(state) => state.previousWord,
+	(word) => {
+		if (word) {
+			wordText.textContent = word;
+			wordDisplay.classList.add("active");
+
+			gsap.fromTo(
+				wordDisplay,
+				{ y: -50, opacity: 0 },
+				{ y: 0, opacity: 1, duration: 0.5, ease: "back.out" }
+			);
 		} else {
 			wordDisplay.classList.remove("active");
 		}
@@ -366,9 +391,28 @@ chatInput.addEventListener("keypress", (event) => {
 	}
 });
 
-function appendChatMessage(data: { username: string; message: string }) {
+// Updated chat message display with colors
+function appendChatMessage(data: {
+	username: string;
+	message: string;
+	color?: string;
+}) {
 	const messageElement = document.createElement("div");
-	messageElement.textContent = `${data.username}: ${data.message}`;
+
+	// Create a username span to apply color
+	const usernameSpan = document.createElement("span");
+	usernameSpan.textContent = `${data.username}:`;
+	usernameSpan.style.color = data.color || "#000000";
+	usernameSpan.style.fontWeight = "bold";
+
+	// Create a message span
+	const messageSpan = document.createElement("span");
+	messageSpan.textContent = ` ${data.message}`;
+
+	// Append both spans to the message element
+	messageElement.appendChild(usernameSpan);
+	messageElement.appendChild(messageSpan);
+
 	messageElement.style.opacity = "0";
 	messageElement.style.transform = "translateY(10px)";
 

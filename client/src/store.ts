@@ -1,4 +1,3 @@
-// store.ts
 import { createStore } from "zustand/vanilla";
 import { Socket, io } from "socket.io-client";
 
@@ -8,6 +7,7 @@ interface Player {
 	wins: number;
 }
 
+// Add userColors to the state
 interface GameState {
 	// User state
 	username: string | null;
@@ -16,14 +16,16 @@ interface GameState {
 	// Game state
 	isDrawingEnabled: boolean;
 	currentWord: string | null;
+	previousWord: string | null;
 	isMyTurn: boolean;
 	turnType: "draw" | "guess" | null;
 	timeRemaining: number;
 
 	// UI state
 	notifications: { id: number; message: string; color: string }[];
-	chatMessages: { username: string; message: string }[];
+	chatMessages: { username: string; message: string; color?: string }[];
 	leaderboard: Player[];
+	userColors: Map<string, string>;
 
 	// Socket connection
 	socket: Socket | null;
@@ -36,9 +38,27 @@ interface GameActions {
 	sendDrawing: (x1: number, y1: number, x2: number, y2: number) => void;
 	clearNotification: (id: number) => void;
 	showNotification: (message: string, color?: string) => void;
+	getUserColor: (username: string) => string;
+	setPreviousWord: (word: string | null) => void;
 }
 
 let notificationId = 0;
+
+// Array of pastel colors for user chat
+const userColors = [
+	"#FF9AA2", // Light red
+	"#FFB7B2", // Light coral
+	"#FFDAC1", // Light peach
+	"#E2F0CB", // Light green
+	"#B5EAD7", // Light teal
+	"#C7CEEA", // Light blue
+	"#F8C8DC", // Light pink
+	"#D0D1FF", // Light lavender
+	"#DABFDE", // Light purple
+	"#89CFF0", // Baby blue
+	"#FBCCE7", // Cotton candy
+	"#F8B195", // Light orange
+];
 
 // Create the vanilla store
 export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
@@ -47,12 +67,14 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 	isLoggedIn: false,
 	isDrawingEnabled: false,
 	currentWord: null,
+	previousWord: null,
 	isMyTurn: false,
 	turnType: null,
 	timeRemaining: 0,
 	notifications: [],
 	chatMessages: [],
 	leaderboard: [],
+	userColors: new Map(),
 	socket: null,
 
 	// Actions
@@ -111,8 +133,9 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 		socket.on(
 			"chat-message",
 			(data: { username: string; message: string }) => {
+				const color = get().getUserColor(data.username);
 				set((state) => ({
-					chatMessages: [...state.chatMessages, data],
+					chatMessages: [...state.chatMessages, { ...data, color }],
 				}));
 			}
 		);
@@ -132,10 +155,17 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 		);
 
 		socket.on("drawing-time-ended", () => {
+			// Store the current word as previous word before resetting
+			const currentWord = get().currentWord;
+			if (currentWord) {
+				get().setPreviousWord(currentWord);
+			}
+
 			set({
 				isMyTurn: false,
 				turnType: null,
 				isDrawingEnabled: false,
+				currentWord: null,
 			});
 			get().showNotification("Time's up!", "red");
 		});
@@ -146,6 +176,9 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 			isLoggedIn: true,
 			socket,
 		});
+
+		// Assign this user a color
+		get().getUserColor(username);
 	},
 
 	sendChatMessage: (message) => {
@@ -187,6 +220,43 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 				(notification) => notification.id !== id
 			),
 		}));
+	},
+
+	getUserColor: (username) => {
+		const { userColors: colorMap } = get();
+
+		// For system messages, always return black
+		if (username === "System") {
+			return "#000000";
+		}
+
+		// If this username already has a color, return it
+		if (colorMap.has(username)) {
+			return colorMap.get(username) as string;
+		}
+
+		// Otherwise assign a new color
+		const index = colorMap.size % userColors.length;
+		const color = userColors[index];
+
+		set((state) => {
+			const newColorMap = new Map(state.userColors);
+			newColorMap.set(username, color);
+			return { userColors: newColorMap };
+		});
+
+		return color;
+	},
+
+	setPreviousWord: (word) => {
+		set({ previousWord: word });
+
+		// After 10 seconds, clear the previous word
+		if (word) {
+			setTimeout(() => {
+				set({ previousWord: null });
+			}, 10000);
+		}
 	},
 }));
 
