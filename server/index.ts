@@ -3,6 +3,16 @@ import { createServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { fileURLToPath } from "url";
 import path from "path";
+import { v4 as uuidv4 } from "uuid";
+import { GameRoom } from "./GameRoom";
+
+// Debug logging
+const DEBUG = true;
+function debugLog(message: string, data?: any) {
+	if (DEBUG) {
+		console.log(`[SERVER DEBUG] ${message}`, data || "");
+	}
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,18 +29,12 @@ const io = new SocketIOServer(httpServer, {
 });
 
 // --- Game State ---
-const connectedUsers = new Map<string, string>();
-let gamePlayers: { player1?: string; player2?: string } = {};
-let drawingUserSocketId: string | null = null;
-let guessingUserSocketId: string | null = null;
-let currentWord: string | null = null;
-let drawingTimerInterval: NodeJS.Timeout | null = null;
-const drawingTimeLimit = 100; // seconds
-let timeRemaining: number = drawingTimeLimit;
-const leaderboard: Array<{ username: string; wins: number }> = [];
+const connectedUsers = new Map<string, string>(); // socketId -> username
+const userColors = new Map<string, string>(); // username -> color
+const waitingPlayers: string[] = []; // socketIds of players waiting for a match
+const gameRooms = new Map<string, GameRoom>(); // roomId -> GameRoom
 
-// User colors mapping
-const userColors = new Map<string, string>();
+// Color options for users
 const colorOptions = [
 	"#FF9AA2", // Light red
 	"#FFB7B2", // Light coral
@@ -45,7 +49,6 @@ const colorOptions = [
 	"#FBCCE7", // Cotton candy
 	"#F8B195", // Light orange
 ];
-// --- End Game State ---
 
 // --- Word List ---
 const words = [
@@ -55,7 +58,6 @@ const words = [
 	"key",
 	"book",
 	"cat",
-	"bread",
 	"flower",
 	"moon",
 	"cup",
@@ -68,250 +70,184 @@ app.use(express.static(frontendBuildPath));
 
 io.on("connection", (socket) => {
 	console.log("A user connected:", socket.id);
+	debugLog("User connected", socket.id);
 
 	socket.on("user-joined", (username) => {
-		console.log(`User ${username} joined with ID: ${socket.id}`);
-		connectedUsers.set(socket.id, username);
+		debugLog(`User ${username} joined with ID: ${socket.id}`);
 
-		// Assign a color to the user
+		// Store user info
+		connectedUsers.set(socket.id, username);
 		assignUserColor(username);
 
-		emitConnectedUsers();
-		tryStartGame();
+		// Add to waiting players
+		waitingPlayers.push(socket.id);
+		debugLog(
+			"Waiting players updated",
+			waitingPlayers.map((id) => connectedUsers.get(id))
+		);
+
+		// Emit updated waiting players count to all clients
+		emitWaitingPlayersCount();
+
+		// Try to create a game if there are at least 2 waiting players
+		tryCreateGame();
 	});
 
 	socket.on("disconnect", () => {
 		const username = connectedUsers.get(socket.id);
 		if (username) {
-			console.log(`User ${username} disconnected: ${socket.id}`);
-			connectedUsers.delete(socket.id);
-			if (gamePlayers.player1 === socket.id) {
-				gamePlayers.player1 = undefined;
-			} else if (gamePlayers.player2 === socket.id) {
-				gamePlayers.player2 = undefined;
+			debugLog(`User ${username} disconnected: ${socket.id}`);
+
+			// Remove from waiting players if present
+			const waitingIndex = waitingPlayers.indexOf(socket.id);
+			if (waitingIndex !== -1) {
+				waitingPlayers.splice(waitingIndex, 1);
+				debugLog(
+					"Removed from waiting players",
+					waitingPlayers.map((id) => connectedUsers.get(id))
+				);
+				emitWaitingPlayersCount();
 			}
-			resetGameState();
-			emitConnectedUsers();
+
+			// Check if player is in a game room
+			for (const [roomId, room] of gameRooms.entries()) {
+				if (room.player1 === socket.id || room.player2 === socket.id) {
+					debugLog(`Player was in room ${roomId}`, {
+						room: roomId,
+						player1: room.player1,
+						player2: room.player2,
+					});
+					room.handlePlayerDisconnect(socket.id);
+					gameRooms.delete(roomId);
+					break;
+				}
+			}
+
+			// Remove user from connected users
+			connectedUsers.delete(socket.id);
 		}
 	});
 
 	socket.on("drawing", (data) => {
-		socket.broadcast.emit("draw", data);
+		debugLog("Drawing received", { socketId: socket.id, data });
+
+		// Find the room this player is in
+		for (const room of gameRooms.values()) {
+			if (socket.id === room.drawingUserId) {
+				room.handleDrawing(data);
+				break;
+			}
+		}
 	});
 
 	socket.on("chat-message", (data) => {
-		// Add color to the chat message
-		const color = getUserColor(data.username);
-		io.emit("chat-message", { ...data, color });
+		debugLog("Chat message received", data);
+
+		// Find the room this player is in
+		for (const room of gameRooms.values()) {
+			if (room.player1 === socket.id || room.player2 === socket.id) {
+				room.handleChatMessage(data.username, data.message);
+				break;
+			}
+		}
 	});
 
 	socket.on("guess", (data) => {
-		console.log(`User ${data.username} guessed: ${data.guess}`);
-		const guess = data.guess.trim().toLowerCase();
-		if (currentWord && guess === currentWord.toLowerCase()) {
-			const guessingUser = connectedUsers.get(socket.id);
-			if (guessingUser) {
-				io.emit("chat-message", {
-					username: "System",
-					message: `${guessingUser} guessed it! The word was "${currentWord}".`,
-					color: "#000000", // System messages are black
-				});
-				updateLeaderboard(guessingUser);
-				emitLeaderboard();
-				endRound();
+		debugLog("Guess received", data);
+
+		// Find the room this player is in
+		for (const room of gameRooms.values()) {
+			if (room.player1 === socket.id || room.player2 === socket.id) {
+				room.handleGuess(socket.id, data.username, data.guess);
+				break;
 			}
-		} else {
-			// Add color to the guess message
-			const color = getUserColor(data.username);
-			io.emit("chat-message", {
-				username: data.username,
-				message: data.guess,
-				color,
-			});
+		}
+	});
+
+	socket.on("leave-room", () => {
+		const username = connectedUsers.get(socket.id);
+		if (username) {
+			debugLog(`User ${username} left room`);
+
+			// Check if player is in a game room
+			for (const [roomId, room] of gameRooms.entries()) {
+				if (room.player1 === socket.id || room.player2 === socket.id) {
+					room.handlePlayerDisconnect(socket.id);
+					gameRooms.delete(roomId);
+					break;
+				}
+			}
+
+			// Add back to waiting players
+			if (!waitingPlayers.includes(socket.id)) {
+				waitingPlayers.push(socket.id);
+				emitWaitingPlayersCount();
+			}
 		}
 	});
 });
 
-function emitConnectedUsers() {
-	const usernames = Array.from(connectedUsers.values());
-	io.emit("connected-users", usernames);
-}
-
-function tryStartGame() {
-	if (Object.keys(gamePlayers).length < 2 && connectedUsers.size >= 2) {
-		const users = Array.from(connectedUsers.keys());
-		gamePlayers = {
-			player1: users[0],
-			player2: users[1],
-		};
-		console.log("Game started with players:", gamePlayers);
-		chooseInitialDrawer();
-	}
-}
-
-function chooseInitialDrawer() {
-	if (gamePlayers.player1 && gamePlayers.player2) {
-		drawingUserSocketId =
-			Math.random() < 0.5 ? gamePlayers.player1 : gamePlayers.player2;
-		guessingUserSocketId =
-			drawingUserSocketId === gamePlayers.player1
-				? gamePlayers.player2
-				: gamePlayers.player1;
-
-		console.log("Drawing user:", drawingUserSocketId);
-		console.log("Guessing user:", guessingUserSocketId);
-
-		currentWord = selectRandomWord();
-		console.log("Word to draw:", currentWord);
-
-		// Emit clear canvas event to all clients at the start of a new game
-		io.emit("clear-canvas");
-
-		if (drawingUserSocketId) {
-			io.to(drawingUserSocketId).emit("start-drawing-turn");
-			io.to(drawingUserSocketId).emit("your-word", currentWord);
-		}
-		if (guessingUserSocketId) {
-			io.to(guessingUserSocketId).emit("start-guessing-turn");
-		}
-
-		startDrawingTimer();
-	}
-}
-
-function startDrawingTimer() {
-	timeRemaining = drawingTimeLimit;
-	if (drawingTimerInterval) {
-		clearInterval(drawingTimerInterval);
-	}
-
-	drawingTimerInterval = setInterval(() => {
-		timeRemaining--;
-		io.emit("timer-update", timeRemaining);
-
-		if (timeRemaining <= 0) {
-			clearInterval(drawingTimerInterval);
-			drawingTimerInterval = null;
-			console.log("Drawing time ended! The word was:", currentWord);
-			io.emit("drawing-time-ended");
-			io.emit("chat-message", {
-				username: "System",
-				message: `Time's up! The word was "${currentWord}".`,
-				color: "#000000", // System messages are black
-			});
-			endRound();
-		}
-	}, 1000);
-}
-
-function selectRandomWord(): string {
-	const randomIndex = Math.floor(Math.random() * words.length);
-	return words[randomIndex];
-}
-
-function updateLeaderboard(username: string) {
-	const player = leaderboard.find((entry) => entry.username === username);
-	if (player) {
-		player.wins++;
-	} else {
-		leaderboard.push({ username, wins: 1 });
-	}
-}
-
-function emitLeaderboard() {
-	leaderboard.sort((a, b) => b.wins - a.wins);
-	io.emit("leaderboard-update", leaderboard);
-}
-
-function endRound() {
-	if (gamePlayers.player1 && gamePlayers.player2) {
-		// Swap roles
-		const tempDrawer = drawingUserSocketId;
-		drawingUserSocketId = guessingUserSocketId;
-		guessingUserSocketId = tempDrawer;
-
-		console.log("Roles switched!");
-		console.log("New Drawing user:", drawingUserSocketId);
-		console.log("New Guessing user:", guessingUserSocketId);
-
-		currentWord = selectRandomWord();
-		console.log("New word to draw:", currentWord);
-
-		io.emit("clear-canvas"); // Clear the canvas for the new turn
-
-		if (drawingUserSocketId) {
-			io.to(drawingUserSocketId).emit("start-drawing-turn");
-			io.to(drawingUserSocketId).emit("your-word", currentWord);
-		}
-		if (guessingUserSocketId) {
-			io.to(guessingUserSocketId).emit("start-guessing-turn");
-		}
-
-		io.emit("chat-message", {
-			username: "System",
-			message: "New round started! Roles have switched.",
-			color: "#000000", // System messages are black
-		});
-
-		startDrawingTimer(); // Start the timer for the new drawing turn
-	} else {
-		io.emit("chat-message", {
-			username: "System",
-			message: "Not enough players to start a new round.",
-			color: "#000000", // System messages are black
-		});
-		resetGameState(); // Optionally reset the game state if not enough players
-	}
-}
-
-function resetGameState() {
-	gamePlayers = {};
-	drawingUserSocketId = null;
-	guessingUserSocketId = null;
-	currentWord = null;
-	if (drawingTimerInterval) {
-		clearInterval(drawingTimerInterval);
-		drawingTimerInterval = null;
-	}
-	timeRemaining = drawingTimeLimit;
-}
-
-// Function to assign a color to a username
 function assignUserColor(username: string) {
-	// If the user already has a color, don't reassign
-	if (userColors.has(username)) {
-		return userColors.get(username);
+	if (!userColors.has(username)) {
+		const randomIndex = Math.floor(Math.random() * colorOptions.length);
+		userColors.set(username, colorOptions[randomIndex]);
 	}
-
-	// For system messages, always use black
-	if (username === "System") {
-		userColors.set(username, "#000000");
-		return "#000000";
-	}
-
-	// Assign a new color
-	const index = userColors.size % colorOptions.length;
-	const color = colorOptions[index];
-	userColors.set(username, color);
-
-	console.log(`Assigned color ${color} to ${username}`);
-	return color;
 }
 
-// Function to get a user's color
 function getUserColor(username: string): string {
-	// For system messages, always use black
-	if (username === "System") {
-		return "#000000";
-	}
+	return userColors.get(username) || "#000000";
+}
 
-	// If the user has a color, return it
-	if (userColors.has(username)) {
-		return userColors.get(username) as string;
-	}
+function emitWaitingPlayersCount() {
+	// Send both connected users and waiting players count
+	const connectedUsersList = Array.from(connectedUsers.values());
+	const waitingPlayersList = waitingPlayers
+		.map((id) => connectedUsers.get(id))
+		.filter(Boolean);
 
-	// If not, assign one
-	return assignUserColor(username) as string;
+	// Send more detailed information about players status
+	io.emit("connected-users", connectedUsersList);
+
+	debugLog("Emitted waiting players count", {
+		totalConnected: connectedUsersList.length,
+		waitingCount: waitingPlayersList.length,
+		waitingPlayers: waitingPlayersList,
+	});
+}
+
+function tryCreateGame() {
+	if (waitingPlayers.length >= 2) {
+		// Take the first two waiting players
+		const player1 = waitingPlayers.shift() as string;
+		const player2 = waitingPlayers.shift() as string;
+
+		// Create a new game room
+		const roomId = uuidv4();
+		const gameRoom = new GameRoom(
+			roomId,
+			player1,
+			player2,
+			io,
+			connectedUsers,
+			userColors,
+			words
+		);
+		gameRooms.set(roomId, gameRoom);
+
+		debugLog("Created new game room", {
+			roomId,
+			player1,
+			player1Name: connectedUsers.get(player1),
+			player2,
+			player2Name: connectedUsers.get(player2),
+		});
+
+		// Start the game
+		gameRoom.startGame();
+
+		// Update waiting players count
+		emitWaitingPlayersCount();
+	}
 }
 
 httpServer.listen(port, () => {
