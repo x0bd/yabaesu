@@ -58,6 +58,7 @@
 				pointer-events: none;
 				font-weight: bold;
 				text-transform: uppercase;
+				display: block;
 			}
 
 			.word-display {
@@ -66,16 +67,29 @@
 				left: 50%;
 				transform: translateX(-50%) skew(-2deg);
 				background-color: #fde047;
-				padding: 8px 16px;
+				padding: 10px 20px;
 				border: 2px solid black;
 				box-shadow: 4px 4px 0 #000;
 				font-weight: bold;
 				text-transform: uppercase;
-				transition: top 0.3s ease;
+				transition: all 0.3s ease;
+				z-index: 100;
+				font-size: 18px;
+				text-align: center;
+				width: auto;
+				min-width: 200px;
 			}
 
 			.word-display.active {
 				top: 10px;
+			}
+
+			#word-text {
+				font-weight: 900;
+				font-size: 20px;
+				display: inline-block;
+				padding: 0 5px;
+				color: #ef4444;
 			}
 
 			.game-status {
@@ -136,6 +150,17 @@
 				font-weight: bold;
 			}
 
+			/* Turn indicator animation */
+			@keyframes highlightTurn {
+				0%,
+				100% {
+					box-shadow: 4px 4px 0 #000;
+				}
+				50% {
+					box-shadow: 6px 6px 0 #000, 0 0 12px rgba(0, 0, 0, 0.2);
+				}
+			}
+
 			.turn-indicator {
 				position: absolute;
 				left: 50%;
@@ -147,6 +172,150 @@
 				font-weight: bold;
 				text-transform: uppercase;
 				box-shadow: 4px 4px 0 #000;
+				z-index: 100;
+				display: block;
+				animation: highlightTurn 2s ease-in-out infinite;
+			}
+
+			.loading-spinner {
+				width: 20px;
+				height: 20px;
+				border: 3px solid #f3f3f3;
+				border-top: 3px solid #ff0000;
+				border-radius: 50%;
+				animation: spin 1s linear infinite;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			/* New matchmaking animation */
+			.matchmaking-animation {
+				position: relative;
+				width: 80px;
+				height: 80px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.player-icon {
+				font-size: 28px;
+				z-index: 2;
+				animation: wiggle 2s ease-in-out infinite;
+				transition: transform 0.2s;
+			}
+
+			.player-icon:hover {
+				transform: scale(1.2);
+				cursor: default;
+			}
+
+			.dot-1,
+			.dot-2,
+			.dot-3,
+			.dot-4 {
+				position: absolute;
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background-color: #ff0000;
+			}
+
+			@keyframes orbit {
+				0% {
+					transform: rotate(0deg) translateX(30px) rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg) translateX(30px) rotate(-360deg);
+				}
+			}
+
+			.dot-1 {
+				animation: orbit 2s linear infinite;
+			}
+
+			.dot-2 {
+				animation: orbit 2s linear infinite;
+				animation-delay: -0.5s;
+			}
+
+			.dot-3 {
+				animation: orbit 2s linear infinite;
+				animation-delay: -1s;
+			}
+
+			.dot-4 {
+				animation: orbit 2s linear infinite;
+				animation-delay: -1.5s;
+			}
+
+			/* Finding opponent text pulse animation */
+			@keyframes pulse {
+				0%,
+				100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.7;
+				}
+			}
+
+			.pulse-text {
+				animation: pulse 1.5s ease-in-out infinite;
+				color: #ef4444;
+			}
+
+			/* Matchmaking container subtle floating animation */
+			@keyframes float {
+				0%,
+				100% {
+					transform: translateY(0px) skew(-2deg);
+				}
+				50% {
+					transform: translateY(-5px) skew(-2deg);
+				}
+			}
+
+			.float-animation {
+				animation: float 4s ease-in-out infinite;
+			}
+
+			.cancel-btn {
+				transition: all 0.2s ease;
+				position: relative;
+				background-color: #ef4444;
+				transform: skew(-2deg);
+			}
+
+			.cancel-btn:hover {
+				transform: skew(-2deg) translateY(-2px);
+				box-shadow: 8px 8px 0 #000 !important;
+				background-color: #dc2626;
+			}
+
+			.cancel-btn:active {
+				transform: skew(-2deg) translateY(0);
+				box-shadow: 4px 4px 0 #000 !important;
+			}
+
+			@keyframes wiggle {
+				0%,
+				100% {
+					transform: rotate(0deg);
+				}
+				25% {
+					transform: rotate(-5deg);
+				}
+				75% {
+					transform: rotate(5deg);
+				}
 			}
 		</style>
 	</head>
@@ -205,6 +374,68 @@
 		</div>
 
 		<div
+			id="matchmaking-container"
+			class="bg-white border-2 border-black p-8 rounded-none w-96 transform-skew hidden flex flex-col relative float-animation"
+			style="box-shadow: 6px 6px 0 #000; min-height: 400px"
+		>
+			<div class="mb-3 flex items-center">
+				<span
+					class="bg-red-600 h-3 w-3 rounded-full inline-block mr-2"
+				></span>
+				<h2 class="text-2xl title-font tracking-tighter uppercase">
+					ヤベス
+				</h2>
+			</div>
+			<div
+				class="border-t-2 border-b-2 border-black py-6 text-center flex-grow"
+			>
+				<h3 class="text-xl font-bold mb-6 pulse-text">
+					FINDING OPPONENT...
+				</h3>
+
+				<div class="flex justify-center mb-6">
+					<div class="matchmaking-animation">
+						<div class="dot-1"></div>
+						<div class="dot-2"></div>
+						<div class="player-icon">👾</div>
+						<div class="dot-3"></div>
+						<div class="dot-4"></div>
+					</div>
+				</div>
+
+				<div
+					class="flex flex-col items-center justify-center space-y-4"
+				>
+					<p id="queue-status" class="text-md font-bold">
+						Looking for players
+					</p>
+					<div class="flex items-center justify-center">
+						<p class="text-sm">
+							Players in queue:
+							<span
+								id="waiting-players-count"
+								class="font-bold text-red-600 text-lg"
+								>0</span
+							>
+						</p>
+					</div>
+					<p class="text-xs italic mt-2">
+						You'll be matched with another player shortly
+					</p>
+				</div>
+			</div>
+			<div class="mt-6">
+				<button
+					id="leave-queue-button"
+					class="cancel-btn text-white font-bold py-3 px-4 rounded-none focus:outline-none w-full uppercase"
+					style="box-shadow: 6px 6px 0 #000"
+				>
+					Cancel
+				</button>
+			</div>
+		</div>
+
+		<div
 			id="game-container"
 			class="bg-white border-2 border-black p-6 rounded-none w-full max-w-5xl hidden flex flex-col transform-skew"
 			style="box-shadow: 6px 6px 0 #000"
@@ -232,7 +463,11 @@
 			</div>
 
 			<div class="flex flex-grow relative">
-				<div id="word-display" class="word-display">
+				<div
+					id="word-display"
+					class="word-display"
+					style="display: none"
+				>
 					YOUR WORD: <span id="word-text"></span>
 				</div>
 				<canvas

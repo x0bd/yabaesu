@@ -13,6 +13,12 @@ interface GameState {
 	username: string | null;
 	isLoggedIn: boolean;
 
+	// Matchmaking state
+	isInQueue: boolean;
+	waitingPlayersCount: number;
+	roomId: string | null;
+	roomPlayers: string[];
+
 	// Game state
 	isDrawingEnabled: boolean;
 	currentWord: string | null;
@@ -40,6 +46,7 @@ interface GameActions {
 	showNotification: (message: string, color?: string) => void;
 	getUserColor: (username: string) => string;
 	setPreviousWord: (word: string | null) => void;
+	leaveRoom: () => void;
 }
 
 let notificationId = 0;
@@ -60,17 +67,29 @@ const userColors = [
 	"#F8B195", // Light orange
 ];
 
+// Add debug logging
+const DEBUG = true;
+function debugLog(message: string, data?: any) {
+	if (DEBUG) {
+		console.log(`[STORE DEBUG] ${message}`, data || "");
+	}
+}
+
 // Create the vanilla store
 export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 	// Initial state
 	username: null,
 	isLoggedIn: false,
+	isInQueue: false,
+	waitingPlayersCount: 0,
+	roomId: null,
+	roomPlayers: [],
 	isDrawingEnabled: false,
 	currentWord: null,
 	previousWord: null,
 	isMyTurn: false,
 	turnType: null,
-	timeRemaining: 0,
+	timeRemaining: 100,
 	notifications: [],
 	chatMessages: [],
 	leaderboard: [],
@@ -181,16 +200,18 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 		get().getUserColor(username);
 	},
 
-	sendChatMessage: (message) => {
+	sendChatMessage: (message: string) => {
 		const { socket, username } = get();
-		if (message && username && socket) {
+		if (socket && username) {
+			debugLog("Sending chat message", { username, message });
 			socket.emit("chat-message", { username, message });
 		}
 	},
 
-	submitGuess: (guess) => {
+	submitGuess: (guess: string) => {
 		const { socket, username } = get();
-		if (guess && username && socket) {
+		if (socket && username) {
+			debugLog("Submitting guess", { username, guess });
 			socket.emit("guess", { username, guess });
 		}
 	},
@@ -256,6 +277,19 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 			setTimeout(() => {
 				set({ previousWord: null });
 			}, 10000);
+		}
+	},
+
+	leaveRoom: () => {
+		const { socket, username } = get();
+		if (socket && username) {
+			socket.emit("leave-room");
+			set({
+				roomId: null,
+				roomPlayers: [],
+				isInQueue: false,
+				waitingPlayersCount: 0,
+			});
 		}
 	},
 }));
