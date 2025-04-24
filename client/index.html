@@ -18,17 +18,14 @@
 				font-weight: 800;
 			}
 
-			.transform-skew {
-				transform: skew(-2deg);
-			}
 			.hover-scale {
 				transition: transform 0.2s, box-shadow 0.2s;
 			}
 			.hover-scale:hover {
-				transform: skew(-2deg) scale(1.02);
+				transform: scale(1.02);
 			}
 			.hover-scale:active {
-				transform: skew(-2deg) translate(2px, 2px);
+				transform: translate(2px, 2px);
 			}
 			.grid-pattern {
 				background-image: linear-gradient(
@@ -48,7 +45,7 @@
 				position: fixed;
 				top: 20px;
 				left: 50%;
-				transform: translateX(-50%) skew(-2deg);
+				transform: translateX(-50%);
 				padding: 12px 20px;
 				background-color: white;
 				border: 2px solid black;
@@ -65,7 +62,7 @@
 				position: absolute;
 				top: -50px;
 				left: 50%;
-				transform: translateX(-50%) skew(-2deg);
+				transform: translateX(-50%);
 				background-color: #fde047;
 				padding: 10px 20px;
 				border: 2px solid black;
@@ -96,7 +93,7 @@
 				position: fixed;
 				top: 50%;
 				left: 50%;
-				transform: translate(-50%, -50%) skew(-2deg);
+				transform: translate(-50%, -50%);
 				padding: 30px;
 				background-color: white;
 				border: 2px solid black;
@@ -276,10 +273,10 @@
 			@keyframes float {
 				0%,
 				100% {
-					transform: translateY(0px) skew(-2deg);
+					transform: translateY(0px);
 				}
 				50% {
-					transform: translateY(-5px) skew(-2deg);
+					transform: translateY(-5px);
 				}
 			}
 
@@ -291,17 +288,16 @@
 				transition: all 0.2s ease;
 				position: relative;
 				background-color: #ef4444;
-				transform: skew(-2deg);
 			}
 
 			.cancel-btn:hover {
-				transform: skew(-2deg) translateY(-2px);
+				transform: translateY(-2px);
 				box-shadow: 8px 8px 0 #000 !important;
 				background-color: #dc2626;
 			}
 
 			.cancel-btn:active {
-				transform: skew(-2deg) translateY(0);
+				transform: translateY(0);
 				box-shadow: 4px 4px 0 #000 !important;
 			}
 
@@ -334,7 +330,7 @@
 
 		<div
 			id="login-container"
-			class="bg-white border-2 border-black shadow-none p-8 rounded-none w-96 transform-skew"
+			class="bg-white border-2 border-black shadow-none p-8 rounded-none w-96"
 			style="box-shadow: 6px 6px 0 #000"
 		>
 			<div class="mb-3 flex items-center">
@@ -354,7 +350,7 @@
 				<input
 					type="text"
 					id="username"
-					class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black transform-skew"
+					class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
 					placeholder="Enter your username"
 				/>
 			</div>
@@ -375,7 +371,7 @@
 
 		<div
 			id="matchmaking-container"
-			class="bg-white border-2 border-black p-8 rounded-none w-96 transform-skew hidden flex flex-col relative float-animation"
+			class="bg-white border-2 border-black p-8 rounded-none w-96 hidden flex flex-col relative float-animation"
 			style="box-shadow: 6px 6px 0 #000; min-height: 400px"
 		>
 			<div class="mb-3 flex items-center">
@@ -456,7 +452,7 @@
 				</div>
 				<div
 					id="timer"
-					class="text-lg font-bold text-black bg-yellow-300 px-3 border-2 border-black transform-skew"
+					class="text-lg font-bold text-black bg-yellow-300 px-3 border-2 border-black"
 				>
 					TIME: --
 				</div>
@@ -472,7 +468,7 @@
 				</div>
 				<canvas
 					id="drawing-canvas"
-					class="border-2 border-black rounded-none bg-white flex-grow mr-4 transform-skew"
+					class="border-2 border-black rounded-none bg-white flex-grow mr-4"
 					width="700"
 					height="450"
 					style="box-shadow: 6px 6px 0 #000"
@@ -480,7 +476,7 @@
 				<div class="flex flex-col w-96">
 					<div
 						id="chat-container"
-						class="border-2 border-black rounded-none p-3 mb-3 h-64 overflow-y-auto transform-skew"
+						class="border-2 border-black rounded-none p-3 mb-3 h-64 overflow-y-auto"
 						style="box-shadow: 6px 6px 0 #000"
 					>
 						<div class="flex items-center mb-2">
@@ -499,7 +495,7 @@
 							<input
 								type="text"
 								id="chat-input"
-								class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black transform-skew"
+								class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
 								placeholder="Type your message..."
 							/>
 							<button
@@ -513,7 +509,7 @@
 					</div>
 					<div
 						id="guessing-container"
-						class="border-2 border-black rounded-none p-3 transform-skew"
+						class="border-2 border-black rounded-none p-3"
 						style="box-shadow: 6px 6px 0 #000"
 					>
 						<div class="flex items-center mb-2">
@@ -527,7 +523,7 @@
 						<input
 							type="text"
 							id="guess-input"
-							class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black transform-skew"
+							class="border-2 border-black rounded-none w-full py-2 px-3 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
 							placeholder="Enter your guess..."
 						/>
 						<button
@@ -543,7 +539,7 @@
 
 			<div
 				id="leaderboard-container"
-				class="mt-4 border-2 border-black rounded-none p-4 transform-skew"
+				class="mt-4 border-2 border-black rounded-none p-4"
 				style="box-shadow: 6px 6px 0 #000"
 			>
 				<div class="flex items-center mb-2">
