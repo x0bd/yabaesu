@@ -54,12 +54,14 @@ const notification = document.getElementById("notification") as HTMLDivElement;
 const wordDisplay = document.getElementById("word-display") as HTMLDivElement;
 const wordText = document.getElementById("word-text") as HTMLSpanElement;
 const gameStatus = document.getElementById("game-status") as HTMLDivElement;
+/*
 const statusTitle = document.getElementById(
 	"status-title"
 ) as HTMLHeadingElement;
 const statusMessage = document.getElementById(
 	"status-message"
 ) as HTMLParagraphElement;
+*/
 const statusButton = document.getElementById(
 	"status-button"
 ) as HTMLButtonElement;
