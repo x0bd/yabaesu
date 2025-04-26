@@ -21,9 +21,14 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 const httpServer = createServer(app);
+
+// Use environment variable for client URL, fallback for local dev
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+console.log(`[SERVER] Allowing CORS origin: ${clientUrl}`); // Add log for debugging
+
 const io = new SocketIOServer(httpServer, {
 	cors: {
-		origin: "http://localhost:5173",
+		origin: clientUrl, // Use the variable here
 		methods: ["GET", "POST"],
 	},
 });
