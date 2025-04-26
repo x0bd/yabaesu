@@ -941,6 +941,7 @@ function displayNotification(
 }
 
 // Function to show game status modals
+/*
 function showGameStatus(title: string, message: string, buttonText: string) {
 	statusTitle.textContent = title;
 	statusMessage.textContent = message;
@@ -967,6 +968,7 @@ function showGameStatus(title: string, message: string, buttonText: string) {
 
 	statusButton.addEventListener("click", closeModal);
 }
+*/
 
 // Initialize game UI
 statusButton.addEventListener("click", () => {

@@ -161,7 +161,7 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 
 		socket.on(
 			"draw",
-			(data: { x1: number; y1: number; x2: number; y2: number }) => {
+			(_data: { x1: number; y1: number; x2: number; y2: number }) => {
 				// This will be handled by our drawing handlers
 			}
 		);
