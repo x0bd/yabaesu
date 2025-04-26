@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Editor Settings
+.vscode/
+
+# Environment variables
+.env
+.env.*
+!/.env.example

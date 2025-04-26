@@ -82,8 +82,9 @@ let lastX = 0;
 let lastY = 0;
 
 // Initialize socket connection
-const socket = io("http://localhost:4000");
-debugLog("Socket connection initialized");
+const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:4000"; // Use env var, fallback to localhost
+const socket = io(serverUrl);
+debugLog(`Socket connection initialized to ${serverUrl}`);
 
 // Subscribe to matchmaking state
 subscribe(
