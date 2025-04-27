@@ -2,6 +2,7 @@ import "./style.css";
 import { gsap } from "gsap";
 import { gameStore, subscribe } from "./store";
 import io from "socket.io-client";
+import { createSplashScreen, removeSplashScreen } from "./splash";
 
 // Debug logging
 const DEBUG = true;
@@ -1112,3 +1113,26 @@ function showWordToast(word: string) {
 			ease: "power2.in",
 		});
 }
+
+// Initialize the app with splash screen
+function initApp() {
+	// Hide the login container initially
+	document.getElementById("login-container")?.classList.add("hidden");
+	
+	// Create splash screen with callback to show login screen
+	createSplashScreen(() => {
+		// After splash screen is removed, show login container
+		document.getElementById("login-container")?.classList.remove("hidden");
+		gsap.from("#login-container", {
+			y: 20,
+			opacity: 0,
+			duration: 0.5,
+			ease: "power2.out"
+		});
+	});
+}
+
+// Initialize immediately when the document is loaded
+document.addEventListener("DOMContentLoaded", () => {
+	initApp();
+});
