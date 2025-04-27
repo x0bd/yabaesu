@@ -122,7 +122,7 @@ export function createSplashScreen(onEnterClick: () => void) {
   dotsContainer.style.marginBottom = "8px";
   
   // Add the color dots representing app colors
-  const colors = ["#ef4444", "#000000", "#fde047", "#93c5fd"];
+  const colors = ["#ef4444", "#000000"];
   colors.forEach(color => {
     const dot = document.createElement("div");
     dot.style.width = "8px";
@@ -443,10 +443,10 @@ function initTextEffect(container: HTMLElement) {
     
     // Add subtitle text - positioned lower to accommodate larger main text
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    // Make subtitle text slightly smaller relative to main text
+    // Increase subtitle text size relative to main text
     const subtitleSize = isMobile ? 
-      Math.min(fontSize * 0.12, 42) : // Reduced from 0.15 to 0.12
-      Math.min(fontSize * 0.11, 36); // Reduced from 0.13 to 0.11
+      Math.min(fontSize * 0.18, 60) : // Increased from 0.12 to 0.18, max cap increased
+      Math.min(fontSize * 0.16, 50); // Increased from 0.11 to 0.16, max cap increased
       
     ctx.font = `400 ${subtitleSize}px Geist Mono`;
     ctx.fillStyle = "#000000";
@@ -507,6 +507,9 @@ function initTextEffect(container: HTMLElement) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio to avoid performance issues
 
     container.appendChild(renderer.domElement);
+
+    // Explicitly set the canvas background style to ensure it's white
+    renderer.domElement.style.backgroundColor = '#ffffff'; 
 
     // Make renderer element respect container bounds
     const rendererElement = renderer.domElement;
