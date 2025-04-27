@@ -15,16 +15,16 @@ export function createSplashScreen(onEnterClick: () => void) {
   splashContainer.style.flexDirection = "column";
   splashContainer.style.justifyContent = "center";
   splashContainer.style.alignItems = "center";
-  splashContainer.style.backgroundColor = "#f3f4f6"; // Light gray background similar to app
+  splashContainer.style.backgroundColor = "#ffffff"; // Clean white background
   
-  // Add grid pattern that matches the main app
-  splashContainer.classList.add('grid-pattern');
+  // Remove grid pattern class - no longer using it
+  // splashContainer.classList.add('grid-pattern');
   
   // Create text container for Three.js effect
   const textEffectContainer = document.createElement("div");
   textEffectContainer.id = "splash-text-effect";
   textEffectContainer.style.width = "100%";
-  textEffectContainer.style.height = "50%"; // Reduced height to make room for button
+  textEffectContainer.style.height = "50%";
   textEffectContainer.style.position = "relative";
   textEffectContainer.style.display = "flex";
   textEffectContainer.style.justifyContent = "center";
@@ -110,12 +110,6 @@ export function createSplashScreen(onEnterClick: () => void) {
   const style = document.createElement("style");
   style.textContent = `
     @import url("https://fonts.googleapis.com/css2?family=Rampart+One&display=swap");
-    
-    .grid-pattern {
-      background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-      background-size: 20px 20px;
-    }
     
     .splash-loading {
       position: relative;
@@ -203,7 +197,7 @@ function initTextEffect(container: HTMLElement) {
   let prevPosition = { x: 0.5, y: 0.5 };
   let easeFactor = 0.02;
   
-  // Shaders
+  // Enhanced shader with more responsive distortion
   const vertexShader = `
     varying vec2 vUv;
     void main() {
@@ -219,16 +213,27 @@ function initTextEffect(container: HTMLElement) {
     uniform vec2 u_prevMouse;
 
     void main() {
-      vec2 gridUV = floor(vUv * vec2(40.0, 40.0)) / vec2(40.0, 40.0);
-      vec2 centreOfPixel = gridUV + vec2(1.0/40.0, 1.0/40.0);
+      // More pronounced pixelation effect
+      vec2 gridUV = floor(vUv * vec2(50.0, 50.0)) / vec2(50.0, 50.0);
+      vec2 centreOfPixel = gridUV + vec2(1.0/50.0, 1.0/50.0);
 
-      vec2 mouseDirection = u_mouse - u_prevMouse;
+      // Stronger mouse movement effect
+      vec2 mouseDirection = (u_mouse - u_prevMouse) * 5.0;
 
       vec2 pixelToMouseDirection = centreOfPixel - u_mouse;
       float pixelDistanceToMouse = length(pixelToMouseDirection);
-      float strength = smoothstep(0.0, 0.2, pixelDistanceToMouse);
-
-      vec2 uvOffset = strength * -mouseDirection * 0.3;
+      
+      // Enhanced distortion with improved smoothstep for more responsive feel
+      float strength = smoothstep(0.0, 0.3, pixelDistanceToMouse);
+      
+      // Stronger distortion and wave effect
+      vec2 uvOffset = strength * -mouseDirection * 0.5;
+      
+      // Add wavy distortion based on time and position
+      float waveStrength = 0.02 * (1.0 - strength);
+      uvOffset.x += waveStrength * sin(vUv.y * 20.0 + pixelDistanceToMouse * 10.0);
+      uvOffset.y += waveStrength * cos(vUv.x * 20.0 + pixelDistanceToMouse * 10.0);
+      
       vec2 uv = vUv - uvOffset;
 
       vec4 color = texture2D(u_texture, uv);
@@ -277,8 +282,8 @@ function initTextEffect(container: HTMLElement) {
     );
 
     // Add outline
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = fontSize * 0.005;
+    ctx.strokeStyle = "#ef4444"; // Red outline that matches the app's aesthetic
+    ctx.lineWidth = fontSize * 0.01; // Thicker outline
     for (let i = 0; i < 3; i++) {
       ctx.strokeText(text, 0, 0);
     }
@@ -333,57 +338,111 @@ function initTextEffect(container: HTMLElement) {
 
     container.appendChild(renderer.domElement);
 
-    // Event listeners for mouse interaction
+    // Event listeners for mouse interaction - make the entire container interactive
     container.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousemove", handleDocumentMouseMove);
     
-    // Auto animation for splash screen
-    animateMouseMovement();
+    // Initial simulated mouse movement to show interactivity
+    simulateInitialMouseMovement();
   }
 
-  function animateMouseMovement() {
-    // Create an automatic mouse movement animation
-    const timeline = gsap.timeline({
-      repeat: -1,
-      yoyo: true,
+  // Simulated initial mouse movement to draw attention
+  function simulateInitialMouseMovement() {
+    const timeline = gsap.timeline({ repeat: 0 });
+    
+    // First movement - diagonal slash
+    timeline.to(targetMousePosition, {
+      x: 0.3,
+      y: 0.3,
+      duration: 1.5,
+      ease: "power2.inOut",
       onUpdate: () => {
-        prevPosition = { ...targetMousePosition };
+        prevPosition = { ...mousePosition };
+        mousePosition.x += (targetMousePosition.x - mousePosition.x) * 0.1;
+        mousePosition.y += (targetMousePosition.y - mousePosition.y) * 0.1;
       }
     });
     
-    // Move in a circular pattern
-    timeline.to(targetMousePosition, {
-      x: 0.3,
-      y: 0.3,
-      duration: 2,
-      ease: "sine.inOut"
-    });
-    
-    timeline.to(targetMousePosition, {
-      x: 0.7,
-      y: 0.3,
-      duration: 2,
-      ease: "sine.inOut"
-    });
-    
     timeline.to(targetMousePosition, {
       x: 0.7,
       y: 0.7,
-      duration: 2,
-      ease: "sine.inOut"
+      duration: 1.5,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        prevPosition = { ...mousePosition };
+        mousePosition.x += (targetMousePosition.x - mousePosition.x) * 0.1;
+        mousePosition.y += (targetMousePosition.y - mousePosition.y) * 0.1;
+      }
+    });
+    
+    // Then circle around
+    timeline.to(targetMousePosition, {
+      x: 0.7,
+      y: 0.3,
+      duration: 1.5,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        prevPosition = { ...mousePosition };
+        mousePosition.x += (targetMousePosition.x - mousePosition.x) * 0.1;
+        mousePosition.y += (targetMousePosition.y - mousePosition.y) * 0.1;
+      }
     });
     
     timeline.to(targetMousePosition, {
       x: 0.3,
       y: 0.7,
+      duration: 1.5,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        prevPosition = { ...mousePosition };
+        mousePosition.x += (targetMousePosition.x - mousePosition.x) * 0.1;
+        mousePosition.y += (targetMousePosition.y - mousePosition.y) * 0.1;
+      }
+    });
+    
+    // Return to center with slower ease for natural finish
+    timeline.to(targetMousePosition, {
+      x: 0.5,
+      y: 0.5,
       duration: 2,
-      ease: "sine.inOut"
+      ease: "power2.inOut",
+      onUpdate: () => {
+        prevPosition = { ...mousePosition };
+        mousePosition.x += (targetMousePosition.x - mousePosition.x) * 0.05;
+        mousePosition.y += (targetMousePosition.y - mousePosition.y) * 0.05;
+      }
     });
   }
 
+  // Handle mouse movement anywhere on the page
+  function handleDocumentMouseMove(event: MouseEvent) {
+    const containerRect = container.getBoundingClientRect();
+    
+    // Check if mouse is outside the container
+    if (
+      event.clientX < containerRect.left ||
+      event.clientX > containerRect.right ||
+      event.clientY < containerRect.top ||
+      event.clientY > containerRect.bottom
+    ) {
+      // Map document coordinates to container space
+      const x = (event.clientX - containerRect.left) / containerRect.width;
+      const y = (event.clientY - containerRect.top) / containerRect.height;
+      
+      // Check if coordinates are within a reasonable range
+      if (x >= -1 && x <= 2 && y >= -1 && y <= 2) {
+        easeFactor = 0.02; // Slower tracking when outside container
+        prevPosition = { ...targetMousePosition };
+        targetMousePosition.x = Math.max(0, Math.min(1, x));
+        targetMousePosition.y = Math.max(0, Math.min(1, y));
+      }
+    }
+  }
+
   function handleMouseMove(event: MouseEvent) {
-    easeFactor = 0.04;
+    easeFactor = 0.08; // Faster tracking inside container
     let rect = container.getBoundingClientRect();
-    prevPosition = { ...targetMousePosition };
+    prevPosition = { ...mousePosition }; // Store current position as previous
 
     targetMousePosition.x = (event.clientX - rect.left) / rect.width;
     targetMousePosition.y = (event.clientY - rect.top) / rect.height;
