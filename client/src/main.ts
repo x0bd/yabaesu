@@ -2,7 +2,7 @@ import "./style.css";
 import { gsap } from "gsap";
 import { gameStore, subscribe } from "./store";
 import io from "socket.io-client";
-import { createSplashScreen, removeSplashScreen } from "./splash";
+import { createSplashScreen } from "./splash";
 
 // Debug logging
 const DEBUG = true;
