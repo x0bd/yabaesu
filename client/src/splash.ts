@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
+import { createLoadingAnimation } from "./animations"; // Import the new function
 
 export function createSplashScreen(onEnterClick: () => void) {
   // Create and return the splash screen element
@@ -15,10 +16,10 @@ export function createSplashScreen(onEnterClick: () => void) {
   splashContainer.style.flexDirection = "column";
   splashContainer.style.justifyContent = "center";
   splashContainer.style.alignItems = "center";
-  splashContainer.style.backgroundColor = "#ffffff"; // Clean white background
+  splashContainer.style.backgroundColor = "#f3f4f6"; // Match the app's main background color
   
-  // Remove grid pattern class - no longer using it
-  // splashContainer.classList.add('grid-pattern');
+  // Re-enable grid pattern class
+  splashContainer.classList.add('grid-pattern');
   
   // Create text container for Three.js effect
   const textEffectContainer = document.createElement("div");
@@ -32,7 +33,7 @@ export function createSplashScreen(onEnterClick: () => void) {
   textEffectContainer.style.maxWidth = "800px"; // Limit maximum width
   textEffectContainer.style.margin = "0 auto"; // Center the container
   
-  // Create a container for the button
+  // Create a container for the button and new loading indicator
   const buttonContainer = document.createElement("div");
   buttonContainer.style.marginTop = "20px"; 
   buttonContainer.style.display = "flex";
@@ -86,20 +87,15 @@ export function createSplashScreen(onEnterClick: () => void) {
     });
   };
   
-  // Add loading text (which appears below the button)
-  const loadingContainer = document.createElement("div");
-  loadingContainer.style.display = "flex";
-  loadingContainer.style.alignItems = "center";
-  loadingContainer.style.gap = "10px";
-  loadingContainer.innerHTML = `
-    <div class="splash-loading">
-      <div class="dot-1"></div>
-      <div class="dot-2"></div>
-      <div class="dot-3"></div>
-      <div class="dot-4"></div>
-    </div>
-    <p class="splash-loading-text">ready when you are</p>
-  `;
+  // Create NEW minimal loading indicator element (placeholder)
+  const loadingIndicator = document.createElement("div");
+  loadingIndicator.id = "minimal-loading-indicator";
+  // Styling will be applied by createLoadingAnimation
+  
+  // Add loading text 
+  const loadingTextElement = document.createElement("p");
+  loadingTextElement.className = "splash-loading-text";
+  loadingTextElement.textContent = "ready when you are";
   
   // Create footer element with attribution
   const footer = document.createElement("div");
@@ -121,8 +117,8 @@ export function createSplashScreen(onEnterClick: () => void) {
   dotsContainer.style.gap = "8px";
   dotsContainer.style.marginBottom = "8px";
   
-  // Add the color dots representing app colors
-  const colors = ["#ef4444", "#000000"];
+  // Add the color dots representing app colors (from loading animation)
+  const colors = ["#ef4444", "#000000", "#cccccc"]; // Red, Black, Light Grey
   colors.forEach(color => {
     const dot = document.createElement("div");
     dot.style.width = "8px";
@@ -185,24 +181,22 @@ export function createSplashScreen(onEnterClick: () => void) {
   
   // Add elements to splash container
   buttonContainer.appendChild(playButton);
-  buttonContainer.appendChild(loadingContainer);
+  buttonContainer.appendChild(loadingIndicator); // Add placeholder
+  buttonContainer.appendChild(loadingTextElement); // Text below the dots
   
   splashContainer.appendChild(textEffectContainer);
   splashContainer.appendChild(buttonContainer);
   splashContainer.appendChild(footer);
   
-  // Add styles
+  // Add styles (Removed GSAP specific styles from here)
   const style = document.createElement("style");
   style.textContent = `
     @import url("https://fonts.googleapis.com/css2?family=Rampart+One&display=swap");
     
-    .splash-loading {
-      position: relative;
-      width: 60px;
-      height: 60px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    .grid-pattern {
+      background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
     }
     
     .splash-loading-text {
@@ -210,46 +204,8 @@ export function createSplashScreen(onEnterClick: () => void) {
       text-transform: uppercase;
       letter-spacing: 2px;
       font-size: 14px;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    
-    .splash-loading .dot-1,
-    .splash-loading .dot-2,
-    .splash-loading .dot-3,
-    .splash-loading .dot-4 {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: #ef4444;
-    }
-    
-    @keyframes orbit {
-      0% {
-        transform: rotate(0deg) translateX(20px) rotate(0deg);
-      }
-      100% {
-        transform: rotate(360deg) translateX(20px) rotate(-360deg);
-      }
-    }
-    
-    .splash-loading .dot-1 {
-      animation: orbit 1.5s linear infinite;
-    }
-    
-    .splash-loading .dot-2 {
-      animation: orbit 1.5s linear infinite;
-      animation-delay: -0.375s;
-    }
-    
-    .splash-loading .dot-3 {
-      animation: orbit 1.5s linear infinite;
-      animation-delay: -0.75s;
-    }
-    
-    .splash-loading .dot-4 {
-      animation: orbit 1.5s linear infinite;
-      animation-delay: -1.125s;
+      animation: pulse 1.5s ease-in-out infinite; /* Keep text pulsing */
+      margin-top: 5px; // Adjusted margin
     }
     
     @keyframes pulse {
@@ -284,11 +240,22 @@ export function createSplashScreen(onEnterClick: () => void) {
         padding: 20px 40px !important;
         font-size: 18px !important;
       }
+      
+      .splash-loading-text {
+        font-size: 12px;
+      }
+      
+      #minimal-loading-indicator {
+          margin-bottom: 5px; /* Add some space between dots and text on mobile */
+      }
     }
   `;
   
   document.head.appendChild(style);
   document.body.appendChild(splashContainer);
+  
+  // Call the reusable animation function
+  createLoadingAnimation(loadingIndicator);
   
   // Initialize Three.js effect
   initTextEffect(textEffectContainer);
@@ -443,16 +410,16 @@ function initTextEffect(container: HTMLElement) {
     
     // Add subtitle text - positioned lower to accommodate larger main text
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    // Increase subtitle text size relative to main text
+    // Make subtitle text slightly larger and position it higher
     const subtitleSize = isMobile ? 
-      Math.min(fontSize * 0.18, 60) : // Increased from 0.12 to 0.18, max cap increased
-      Math.min(fontSize * 0.16, 50); // Increased from 0.11 to 0.16, max cap increased
+      Math.min(fontSize * 0.14, 63) : // Increased from 0.12 to 0.14, increased cap
+      Math.min(fontSize * 0.13, 70); // Increased from 0.11 to 0.13, increased cap
       
-    ctx.font = `400 ${subtitleSize}px Geist Mono`;
+    ctx.font = `600 ${subtitleSize}px Geist Mono`;
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
-    // Position the subtitle lower to make more room for the larger main text
-    ctx.fillText("SILLY DRAW & GUESS GAME", canvasWidth / 2, canvasHeight * (isMobile ? 0.75 : 0.72));
+    // Position the subtitle slightly higher 
+    ctx.fillText("SILLY DRAW & GUESS GAME", canvasWidth / 2, canvasHeight * (isMobile ? 0.72 : 0.70)); // Reduced multipliers to move text up
 
     return new THREE.CanvasTexture(canvas);
   }
@@ -503,13 +470,14 @@ function initTextEffect(container: HTMLElement) {
       renderer.setSize(containerWidth, containerHeight);
     }
     
-    renderer.setClearColor(0xffffff, 1);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio to avoid performance issues
+    // Match the app's main background color for the clear color
+    renderer.setClearColor(0xf3f4f6, 1); 
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio
 
     container.appendChild(renderer.domElement);
 
-    // Explicitly set the canvas background style to ensure it's white
-    renderer.domElement.style.backgroundColor = '#ffffff'; 
+    // Explicitly set the canvas background style to match the app's bg
+    renderer.domElement.style.backgroundColor = '#f3f4f6'; 
 
     // Make renderer element respect container bounds
     const rendererElement = renderer.domElement;

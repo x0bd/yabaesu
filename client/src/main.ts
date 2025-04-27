@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { gameStore, subscribe } from "./store";
 import io from "socket.io-client";
 import { createSplashScreen } from "./splash";
+import { createLoadingAnimation } from "./animations"; // Import the animation utility
 
 // Debug logging
 const DEBUG = true;
@@ -86,6 +87,9 @@ let lastY = 0;
 const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:4000"; // Use env var, fallback to localhost
 const socket = io(serverUrl);
 debugLog(`Socket connection initialized to ${serverUrl}`);
+
+// Global variable to hold the matchmaking animation tween
+let matchmakingLoadingTween: gsap.core.Tween | null = null;
 
 // Subscribe to matchmaking state
 subscribe(
@@ -592,49 +596,26 @@ function updateGameUI(state: {
 }
 
 function showMatchmakingScreen() {
-	gameContainer.style.display = "none";
 	loginContainer.style.display = "none";
+	gameContainer.style.display = "none";
 	matchmakingContainer.style.display = "flex";
-	matchmakingContainer.style.zIndex = "10";
+	
+	// Start the loading animation
+	const loadingIndicatorElement = document.getElementById("matchmaking-loading-indicator");
+	if (loadingIndicatorElement) {
+		// Kill previous animation if it exists
+		if (matchmakingLoadingTween) {
+			matchmakingLoadingTween.kill();
+		}
+		matchmakingLoadingTween = createLoadingAnimation(loadingIndicatorElement);
+	}
 
-	// Make sure all game elements are hidden
-	turnIndicator.style.display = "none";
-	wordDisplay.style.display = "none";
-
-	// Enhanced animation for the matchmaking container
-	gsap.timeline()
-		.from(matchmakingContainer, {
-			opacity: 0,
-			y: 30,
-			scale: 0.97,
-			duration: 0.5,
-			ease: "back.out(1.4)",
-		})
-		.from("#queue-status", {
-			opacity: 0,
-			y: 10,
-			duration: 0.3,
-			delay: 0.1,
-		})
-		.from(
-			".matchmaking-animation",
-			{
-				opacity: 0,
-				scale: 0.8,
-				duration: 0.5,
-				ease: "elastic.out(1, 0.5)",
-			},
-			"-=0.2"
-		)
-		.from(
-			"#leave-queue-button",
-			{
-				opacity: 0,
-				y: 10,
-				duration: 0.3,
-			},
-			"-=0.3"
-		);
+	// Show screen with animation
+	gsap.fromTo(
+		"#matchmaking-container",
+		{ opacity: 0, scale: 0.95 },
+		{ opacity: 1, scale: 1, duration: 0.3, ease: "power1.out" }
+	);
 }
 
 function showGameScreen() {
@@ -666,25 +647,31 @@ function showGameScreen() {
 		{ opacity: 0, y: 20 },
 		{ opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
 	);
+
+	// Stop matchmaking animation if it's running
+	if (matchmakingLoadingTween) {
+		matchmakingLoadingTween.kill();
+		matchmakingLoadingTween = null;
+	}
 }
 
 function showLoginScreen() {
-	matchmakingContainer.style.display = "none";
 	gameContainer.style.display = "none";
-	loginContainer.style.display = "flex";
-	loginContainer.style.zIndex = "10";
+	matchmakingContainer.style.display = "none";
+	loginContainer.style.display = "block";
 
-	// Make sure all game elements are hidden
-	turnIndicator.style.display = "none";
-	wordDisplay.style.display = "none";
+	// Stop matchmaking animation if it's running
+	if (matchmakingLoadingTween) {
+		matchmakingLoadingTween.kill();
+		matchmakingLoadingTween = null;
+	}
 
-	// Animate the login container
-	gsap.from(loginContainer, {
-		opacity: 0,
-		y: 20,
-		duration: 0.5,
-		ease: "power2.out",
-	});
+	// Animate the login screen appearance
+	gsap.fromTo(
+		"#login-container",
+		{ opacity: 0, y: 20 },
+		{ opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+	);
 }
 
 // Event listeners
@@ -706,8 +693,10 @@ loginButton.addEventListener("click", () => {
 });
 
 leaveQueueButton.addEventListener("click", () => {
-	gameStore.getState().leaveRoom();
-	showLoginScreen();
+	debugLog("Leave queue button clicked");
+	socket.emit("leave-queue");
+	gameStore.setState({ isInQueue: false, roomId: null, roomPlayers: [] });
+	showLoginScreen(); // This already handles killing the animation
 });
 
 if (ctx) {
