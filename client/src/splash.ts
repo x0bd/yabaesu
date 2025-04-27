@@ -415,7 +415,7 @@ function initTextEffect(container: HTMLElement) {
       Math.min(fontSize * 0.14, 63) : // Increased from 0.12 to 0.14, increased cap
       Math.min(fontSize * 0.13, 70); // Increased from 0.11 to 0.13, increased cap
       
-    ctx.font = `600 ${subtitleSize}px Geist Mono`;
+    ctx.font = `500 ${subtitleSize}px Geist Mono`;
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     // Position the subtitle slightly higher 
