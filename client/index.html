@@ -318,6 +318,11 @@
 	<body
 		class="h-screen flex items-center justify-center bg-gray-100 grid-pattern"
 	>
+		<!-- Mobile Warning Banner -->
+		<div class="mobile-warning-banner">
+			This game is best experienced on PC or tablet screens
+		</div>
+
 		<!-- Notification Element -->
 		<div id="notification" class="notification"></div>
 
@@ -471,7 +476,7 @@
 					class="border-2 border-black rounded-none bg-white flex-grow mr-4"
 					width="700"
 					height="450"
-					style="box-shadow: 6px 6px 0 #000"
+					style="box-shadow: 6px 6px 0 #000; background-color: #ffffff;"
 				></canvas>
 				<div class="flex flex-col w-96">
 					<div
@@ -557,6 +562,17 @@
 					class="border-t-2 border-black pt-2"
 				></ul>
 			</div>
+		</div>
+
+		<!-- Add the credits footer before the closing body tag -->
+		<div class="credits-footer">
+			<div class="color-dots">
+				<div class="color-dot" style="background-color: #ef4444;"></div>
+				<div class="color-dot" style="background-color: #000000;"></div>
+				<div class="color-dot" style="background-color: #fde047;"></div>
+				<div class="color-dot" style="background-color: #93c5fd;"></div>
+			</div>
+			<a href="https://xoboid.vercel.app" target="_blank">designed and built by xoboid</a>
 		</div>
 
 		<script type="module" src="./src/main.ts"></script>

@@ -219,6 +219,12 @@ socket.on("clear-canvas", () => {
 
 	// Ensure word display is hidden when canvas is cleared
 	wordDisplay.style.display = "none";
+	
+	// Make sure canvas background stays white
+	if (ctx) {
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+	}
 });
 
 socket.on("chat-message", (data) => {
@@ -632,37 +638,34 @@ function showMatchmakingScreen() {
 }
 
 function showGameScreen() {
+	loginContainer.style.display = "none";
 	matchmakingContainer.style.display = "none";
 	gameContainer.style.display = "flex";
-	gameContainer.style.opacity = "1";
-	gameContainer.style.zIndex = "10";
-
-	// Reset UI visibility to ensure all elements are visible
+	
+	// Adjust layout for mobile if needed
+	if (isMobileDevice()) {
+		gameContainer.style.flexDirection = "column";
+		const canvasContainer = document.querySelector(".canvas-container");
+		if (canvasContainer) {
+			canvasContainer.classList.add("w-full");
+		}
+	}
+	
+	// Reset canvas with proper white background
+	clearCanvas();
+	
+	// Double check canvas styling
+	canvas.style.backgroundColor = "#ffffff";
+	
+	// Ensure UI elements are visible
 	resetUIVisibility();
-
-	// Make sure turnIndicator is visible
-	if (turnIndicator) {
-		turnIndicator.classList.remove("hidden");
-		turnIndicator.style.display = "block";
-	}
-
-	// Ensure word display has the right visibility based on current state
-	const state = gameStore.getState();
-	if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
-		wordDisplay.style.display = "block";
-		wordDisplay.style.opacity = "1";
-	} else {
-		wordDisplay.style.display = "none";
-	}
-
-	// Animate the game container
-	gsap.from(gameContainer, {
-		opacity: 0,
-		y: 20,
-		duration: 0.5,
-		ease: "power2.out",
-		onComplete: resetUIVisibility, // Call resetUIVisibility after animation completes
-	});
+	
+	// Show game UI elements with animation
+	gsap.fromTo(
+		"#game-container",
+		{ opacity: 0, y: 20 },
+		{ opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+	);
 }
 
 function showLoginScreen() {
@@ -712,6 +715,10 @@ if (ctx) {
 	ctx.strokeStyle = "black";
 	ctx.lineJoin = "round";
 	ctx.lineCap = "round";
+	
+	// Ensure canvas has the same white background as the rest of the app
+	ctx.fillStyle = "#ffffff";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	canvas.addEventListener("mousedown", (e) => {
 		if (!gameStore.getState().isDrawingEnabled) return;
@@ -757,7 +764,9 @@ function drawLine(x1: number, y1: number, x2: number, y2: number) {
 
 function clearCanvas() {
 	if (ctx) {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		// Use the same white color as the app background
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
 	}
 }
 
@@ -1114,12 +1123,39 @@ function showWordToast(word: string) {
 		});
 }
 
+// Check if the device is mobile
+function isMobileDevice() {
+	return (window.innerWidth <= 768) || 
+		   (navigator.maxTouchPoints > 0 && /Mobi|Android/i.test(navigator.userAgent));
+}
+
+// Function to handle responsiveness
+function handleResponsiveness() {
+	const isMobile = isMobileDevice();
+	
+	// Update UI elements based on device
+	if (isMobile) {
+		// Adjust canvas size for mobile
+		const canvas = document.getElementById("drawing-canvas") as HTMLCanvasElement;
+		if (canvas) {
+			canvas.width = Math.min(window.innerWidth - 40, 400);
+			canvas.height = canvas.width;
+		}
+		
+		// Adjust chat container for mobile
+		const chatMessages = document.getElementById("chat-messages");
+		if (chatMessages) {
+			chatMessages.style.maxHeight = "120px";
+		}
+	}
+}
+
 // Initialize the app with splash screen
 function initApp() {
 	// Hide the login container initially
 	document.getElementById("login-container")?.classList.add("hidden");
 	
-	// Create splash screen with callback to show login screen
+	// Create splash screen with callback to show login container
 	createSplashScreen(() => {
 		// After splash screen is removed, show login container
 		document.getElementById("login-container")?.classList.remove("hidden");
@@ -1129,10 +1165,16 @@ function initApp() {
 			duration: 0.5,
 			ease: "power2.out"
 		});
+		
+		// Check responsiveness
+		handleResponsiveness();
 	});
 }
 
 // Initialize immediately when the document is loaded
 document.addEventListener("DOMContentLoaded", () => {
 	initApp();
+	
+	// Add resize listener for responsiveness
+	window.addEventListener("resize", handleResponsiveness);
 });
