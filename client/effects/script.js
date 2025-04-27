@@ -107,4 +107,84 @@ function init() {
 		u_prevMouse: { type: "v2", value: new THREE.Vector2() },
 		u_texture: { type: "t", value: texture },
 	};
+
+	planeMesh = new THREE.Mesh(
+		new THREE.PlaneGeometry(2, 2),
+		new THREE.ShaderMaterial({
+			uniforms: shaderUniforms,
+			vertexShader: vertexShader,
+			fragmentShader: fragmentShader,
+		})
+	);
+
+	scene.add(planeMesh);
+
+	renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setClearColor(0xffffff, 1);
+	renderer.setPixelRatio(window.devicePixelRatio);
+
+	textContainer.appendChild(renderer.domElement);
+}
+
+function reloadTexture() {
+	const newTexture = createTextTexture(
+		"ヤベス",
+		"Rampart One",
+		null,
+		"#ffffff",
+		"100"
+	);
+
+	planeMesh.material.uniforms.u_texture.value = newTexture;
+}
+
+init(createTextTexture("ヤベス", "Rampart One", null, "#ffffff", "100"));
+
+function animate() {
+	requestAnimationFrame(animate);
+
+	mousePosition.x += (targetMousePosition.x - mousePosition.x) * easeFactor;
+	mousePosition.y += (targetMousePosition.y - mousePosition.y) * easeFactor;
+
+	planeMesh.material.uniforms.u_mouse.value.set(
+		mousePosition.x,
+		1.0 - mousePosition.y
+	);
+
+	planeMesh.material.uniforms.u_prevMouse.value.set(
+		prevPosition.x,
+		1.0 - prevPosition.y
+	);
+
+	renderer.render(scene, camera);
+}
+
+animate();
+
+textContainer.addEventListener("mousemove", handleMouseMove);
+textContainer.addEventListener("mouseenter", handleMouseEnter);
+textContainer.addEventListener("mouseleave", handleMouseLeave);
+
+function handleMouseMove(event) {
+	easeFactor = 0.04;
+	let rect = textContainer.getBoundingClientRect();
+	prevPosition = { ...targetMousePosition };
+
+	targetMousePosition.x = (event.clientX = rect.left) / rect.width;
+	targetMousePosition.y = (event.clientY - rect.top) / rect.height;
+}
+
+function handleMouseEnter(event) {
+	easeFactor = 0.02;
+
+	mousePosition.x = targetMousePosition.x =
+		(event.clientX - rect.left) / rect.width;
+	mousePosition.y = targetMousePosition.y =
+		(event.clientY - rect.top) / rect.height;
+}
+
+function handleMouseLeave() {
+	easeFactor = 0.02;
+	prevPosition = { ...targetMousePosition };
 }
