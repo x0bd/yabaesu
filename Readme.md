@@ -82,4 +82,4 @@ This project is licensed under the "Buy Me a Beer" License - see the [LICENSE](L
 
 - Special thanks to everyone who tested the game
 - Inspiration from classic drawing games
-- Built with ❤️ by [Your Name]
+- Built with ❤️ by Tinodaishe Tembo
