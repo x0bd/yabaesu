@@ -237,7 +237,7 @@ socket.on("drawing-time-ended", () => {
 
 	// Explicitly hide the word display when drawing time ends
 	if (wordDisplay) {
-		wordDisplay.style.display = "none";
+		wordDisplay.style.cssText = "display: none !important"; // Force hidden
 		wordDisplay.classList.remove("active");
 	}
 });
@@ -248,7 +248,7 @@ socket.on("clear-canvas", () => {
 	resetUIVisibility();
 
 	// Ensure word display is hidden when canvas is cleared
-	wordDisplay.style.display = "none";
+	wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
 	
 	// Make sure canvas background stays white
 	if (ctx) {
@@ -315,8 +315,8 @@ subscribe(
 
 		if (currentWordValue && isMyTurn && turnType === "draw") {
 			wordText.textContent = currentWordValue;
-			wordDisplay.style.display = "block"; // Ensure it's display: block
-			wordDisplay.classList.add("active"); // This moves it down with top: 10px
+			wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
+			wordDisplay.classList.add("active");
 
 			// Animation for appearing
 			gsap.fromTo(
@@ -335,7 +335,7 @@ subscribe(
 			});
 		} else {
 			// If the conditions are not met, hide it.
-			wordDisplay.style.display = "none";
+			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
 			wordDisplay.classList.remove("active");
 		}
 	}
@@ -458,7 +458,7 @@ socket.on(
 				);
 
 				// Also create a pulsing effect on the word display element
-				wordDisplay.style.display = "block";
+				wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
 				wordText.textContent = data.currentWord;
 				wordDisplay.classList.add("active");
 
@@ -672,7 +672,7 @@ function updateGameUI(state: {
 				canvas.style.pointerEvents = "none";
 				
 				// Ensure word display is hidden for guessers
-				wordDisplay.style.display = "none";
+				wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
 				
 				// Remove finish drawing button if it exists
 				const finishButton = document.getElementById("finish-drawing-button");
@@ -685,17 +685,17 @@ function updateGameUI(state: {
 			turnIndicator.className = "turn-indicator bg-yellow-500 text-white px-4 py-1";
 			
 			// Ensure word display is hidden when waiting
-			wordDisplay.style.display = "none";
+			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
 		}
 	}
 	
-	// Update word display - only show when actually drawing with a current word
+	// Update word display - only show when actively drawing with a current word
 	if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
 		wordText.textContent = state.currentWord;
-		wordDisplay.style.display = "block";
+		wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
 		wordDisplay.classList.add("active");
 	} else {
-		wordDisplay.style.display = "none";
+		wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
 		wordDisplay.classList.remove("active");
 	}
 	
@@ -1425,11 +1425,11 @@ function resetUIVisibility() {
 	// Word display visibility should depend on game state
 	const { currentWord, turnType, isMyTurn } = gameStore.getState();
 	if (currentWord && turnType === "draw" && isMyTurn) {
-		wordDisplay.style.display = "block";
+		wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
 		wordDisplay.style.opacity = "1";
 		wordDisplay.style.zIndex = "100";
 	} else {
-		wordDisplay.style.display = "none";
+		wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
 	}
 
 	debugLog("Reset UI element visibility");
