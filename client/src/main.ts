@@ -74,11 +74,10 @@ const turnIndicator = document.getElementById(
 	"turn-indicator"
 ) as HTMLDivElement;
 
-// Update the wordDisplayLabel to "YOUR PREVIOUS WORD: "
+// We're removing the previous word display
 const wordDisplayLabel = document.querySelector(".word-display") as HTMLElement;
 if (wordDisplayLabel) {
-	// wordDisplayLabel.innerHTML =
-	// 	'YOUR PREVIOUS WORD: <span id="word-text"></span>';
+	wordDisplayLabel.innerHTML = '<span id="word-text"></span>';
 }
 
 // Drawing variables
@@ -311,17 +310,22 @@ subscribe(
 // Updated to handle the current word
 subscribe(
 	(state) => state.currentWord,
-	(word) => {
-		if (word) {
-			wordText.textContent = word;
-			wordDisplay.classList.add("active");
+	(currentWordValue) => {
+		const { isMyTurn, turnType } = gameStore.getState(); // Get other relevant state parts
 
+		if (currentWordValue && isMyTurn && turnType === "draw") {
+			wordText.textContent = currentWordValue;
+			wordDisplay.style.display = "block"; // Ensure it's display: block
+			wordDisplay.classList.add("active"); // This moves it down with top: 10px
+
+			// Animation for appearing
 			gsap.fromTo(
 				wordDisplay,
 				{ y: -50, opacity: 0 },
 				{ y: 0, opacity: 1, duration: 0.5, ease: "back.out" }
 			);
 
+			// Animation for the text itself
 			gsap.to(wordText, {
 				scale: 1.1,
 				color: "#ff0000",
@@ -329,28 +333,15 @@ subscribe(
 				repeat: 1,
 				yoyo: true,
 			});
-		}
-	}
-);
-
-// New subscription for previous word
-subscribe(
-	(state) => state.previousWord,
-	(word) => {
-		if (word) {
-			wordText.textContent = word;
-			wordDisplay.classList.add("active");
-
-			gsap.fromTo(
-				wordDisplay,
-				{ y: -50, opacity: 0 },
-				{ y: 0, opacity: 1, duration: 0.5, ease: "back.out" }
-			);
 		} else {
+			// If the conditions are not met, hide it.
+			wordDisplay.style.display = "none";
 			wordDisplay.classList.remove("active");
 		}
 	}
 );
+
+// We're removing the previous word subscription since we don't need it anymore
 
 // Define the leaderboard entry type
 interface LeaderboardEntry {
@@ -698,8 +689,8 @@ function updateGameUI(state: {
 		}
 	}
 	
-	// Update word display
-	if (state.currentWord && state.turnType === "draw") {
+	// Update word display - only show when actually drawing with a current word
+	if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
 		wordText.textContent = state.currentWord;
 		wordDisplay.style.display = "block";
 		wordDisplay.classList.add("active");
