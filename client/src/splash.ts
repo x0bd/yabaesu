@@ -33,16 +33,74 @@ export function createSplashScreen(onEnterClick: () => void) {
   textEffectContainer.style.maxWidth = "800px"; // Limit maximum width
   textEffectContainer.style.margin = "0 auto"; // Center the container
   
+  // Create simple HTML title for mobile screens
+  const simpleTitleContainer = document.createElement("div");
+  simpleTitleContainer.id = "simple-title-container";
+  simpleTitleContainer.style.display = "none"; // Hidden by default, shown on mobile
+  simpleTitleContainer.style.textAlign = "center";
+  simpleTitleContainer.style.padding = "0";
+  simpleTitleContainer.style.width = "100%";
+  simpleTitleContainer.style.maxWidth = "100%";
+  simpleTitleContainer.style.position = "relative";
+  simpleTitleContainer.style.display = "flex";
+  simpleTitleContainer.style.flexDirection = "column";
+  simpleTitleContainer.style.justifyContent = "center";
+  simpleTitleContainer.style.alignItems = "center";
+  simpleTitleContainer.style.marginBottom = "10px"; // Reduced from 20px
+  
+  // Create main title with improved styling
+  const mainTitle = document.createElement("h1");
+  mainTitle.textContent = "ヤベス";
+  mainTitle.style.fontSize = "clamp(80px, 25vw, 150px)"; // Larger responsive font size
+  mainTitle.style.fontFamily = "'Rampart One', cursive";
+  mainTitle.style.margin = "0";
+  mainTitle.style.padding = "0";
+  mainTitle.style.lineHeight = "1";
+  mainTitle.style.color = "#000000";
+  mainTitle.style.fontWeight = "700";
+  mainTitle.style.textShadow = "5px 5px 0 #ef4444, 8px 8px 0px rgba(0,0,0,0.1)"; // Enhanced shadow
+  mainTitle.style.letterSpacing = "-0.02em";
+  mainTitle.style.transform = "translateZ(0)"; // Hardware acceleration for better rendering
+  mainTitle.style.marginBottom = "15px"; // Increased spacing after title
+  
+  // Create subtitle with improved styling
+  const subtitle = document.createElement("p");
+  subtitle.textContent = "SILLY DRAW & GUESS GAME";
+  subtitle.style.fontSize = "clamp(14px, 4vw, 22px)"; // Responsive font size
+  subtitle.style.fontFamily = "'Geist Mono', monospace";
+  subtitle.style.marginTop = "clamp(5px, 1.5vw, 15px)"; // Responsive margin
+  subtitle.style.marginBottom = "0";
+  subtitle.style.padding = "0";
+  subtitle.style.fontWeight = "600";
+  subtitle.style.letterSpacing = "0.05em";
+  subtitle.style.textTransform = "uppercase";
+  subtitle.style.color = "#333333";
+  subtitle.style.position = "relative";
+  
+  // Add subtle decoration to the subtitle
+  const subtitleDecoration = document.createElement("div");
+  subtitleDecoration.style.width = "30px";
+  subtitleDecoration.style.height = "2px";
+  subtitleDecoration.style.backgroundColor = "#ef4444";
+  subtitleDecoration.style.margin = "10px auto"; // Increased margin
+  
+  // Assemble simple title with more structure
+  mainTitle.style.marginBottom = "4px";
+  simpleTitleContainer.appendChild(mainTitle);
+  simpleTitleContainer.appendChild(subtitleDecoration);
+  simpleTitleContainer.appendChild(subtitle);
+  
   // Create a container for the button and new loading indicator
   const buttonContainer = document.createElement("div");
-  buttonContainer.style.marginTop = "20px"; 
+  buttonContainer.style.marginTop = "20px"; // Increased spacing before buttons
   buttonContainer.style.display = "flex";
   buttonContainer.style.flexDirection = "column";
   buttonContainer.style.alignItems = "center";
-  buttonContainer.style.gap = "20px";
+  buttonContainer.style.gap = "10px"; // Increased gap between button elements
   
   // Create the play button with the game's aesthetic
   const playButton = document.createElement("button");
+  playButton.id = "splash-play-button";
   playButton.textContent = "PLAY";
   playButton.style.backgroundColor = "#000000";
   playButton.style.color = "#ffffff";
@@ -173,6 +231,10 @@ export function createSplashScreen(onEnterClick: () => void) {
     `;
     
     splashContainer.appendChild(mobileWarning);
+    
+    // Show simple title and hide Three.js title on mobile
+    simpleTitleContainer.style.display = "block";
+    textEffectContainer.style.display = "none";
   }
   
   // Assemble footer
@@ -185,6 +247,7 @@ export function createSplashScreen(onEnterClick: () => void) {
   buttonContainer.appendChild(loadingTextElement); // Text below the dots
   
   splashContainer.appendChild(textEffectContainer);
+  splashContainer.appendChild(simpleTitleContainer); // Add simple title container
   splashContainer.appendChild(buttonContainer);
   splashContainer.appendChild(footer);
   
@@ -217,17 +280,36 @@ export function createSplashScreen(onEnterClick: () => void) {
       }
     }
     
-    /* Media queries for better mobile experience */
+    /* Enhanced media queries for better mobile experience */
     @media (max-width: 768px) {
       #splash-text-effect {
-        height: 40% !important;
-        width: 90% !important; 
-        margin: 0 auto !important;
+        display: none !important; /* Hide Three.js effect on mobile */
       }
       
-      #splash-text-effect canvas {
-        width: 100% !important;
-        height: auto !important;
+      #simple-title-container {
+        display: block !important; /* Show simple title on mobile */
+        height: auto !important; /* Changed from fixed height */
+        padding: 0 !important;
+        margin-bottom: 5px !important; /* Added some margin */
+      }
+      
+      #simple-title-container h1 {
+        font-size: clamp(90px, 30vw, 160px) !important; /* Even larger on mobile */
+        line-height: 0.9 !important; /* Tighter line height */
+        margin-bottom: 10px !important; /* Positive margin for spacing */
+      }
+      
+      /* Better subtitle positioning */
+      #simple-title-container p {
+        max-width: 90vw;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 10px !important; /* Positive margin for spacing */
+        font-size: 14px !important;
+      }
+      
+      #simple-title-container div {
+        margin: 8px auto !important; /* Increased margin for divider */
       }
       
       .splash-footer {
@@ -235,18 +317,107 @@ export function createSplashScreen(onEnterClick: () => void) {
         padding: 5px !important;
       }
       
-      /* Increase play button size on mobile */
+      /* Increase play button size on mobile but reduce margins */
       #splash-play-button {
-        padding: 20px 40px !important;
+        padding: 16px 32px !important;
         font-size: 18px !important;
+        margin-top: 15px !important; /* Increased margin */
       }
       
       .splash-loading-text {
         font-size: 12px;
+        margin-top: 5px !important; /* Added some spacing */
       }
       
       #minimal-loading-indicator {
-          margin-bottom: 5px; /* Add some space between dots and text on mobile */
+        margin-bottom: 5px !important; /* Added margin */
+        transform: scale(0.9);
+      }
+    }
+    
+    /* Extra small screen adjustments */
+    @media (max-width: 380px) {
+      #simple-title-container h1 {
+        font-size: clamp(70px, 28vw, 120px) !important; /* Adjusted for very small screens */
+        margin-bottom: 8px !important;
+      }
+      
+      #simple-title-container p {
+        font-size: 12px !important;
+        margin-top: 5px !important;
+      }
+      
+      #simple-title-container div {
+        width: 20px !important;
+        margin: 5px auto !important;
+        height: 1px !important; /* Thinner divider */
+      }
+      
+      /* More compact button area */
+      #splash-play-button {
+        padding: 14px 28px !important;
+        margin-top: 10px !important;
+      }
+    }
+    
+    /* Landscape mode adjustments */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        overflow-y: auto !important; /* Allow scrolling in extreme cases */
+      }
+      
+      #splash-container {
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+      }
+      
+      #simple-title-container {
+        height: auto !important;
+        max-height: none !important;
+        margin-bottom: 5px !important;
+      }
+      
+      #simple-title-container h1 {
+        font-size: min(8vh, 60px) !important;
+        margin-bottom: 5px !important;
+      }
+      
+      #simple-title-container p {
+        font-size: 12px !important;
+        margin-top: 5px !important;
+      }
+      
+      #simple-title-container div {
+        height: 1px !important;
+        width: 20px !important;
+        margin: 5px auto !important;
+      }
+      
+      #splash-play-button {
+        padding: 10px 28px !important;
+        margin-top: 8px !important;
+        font-size: 14px !important;
+      }
+      
+      .splash-loading-text {
+        font-size: 10px !important;
+        margin-top: 3px !important;
+      }
+      
+      #minimal-loading-indicator {
+        transform: scale(0.8) !important;
+        margin-bottom: 3px !important;
+      }
+      
+      .splash-footer {
+        position: relative !important;
+        bottom: auto !important;
+        margin-top: 10px !important;
+        font-size: 9px !important;
+      }
+      
+      .mobile-warning {
+        display: none !important; /* Hide warning in landscape to save space */
       }
     }
   `;
@@ -257,11 +428,32 @@ export function createSplashScreen(onEnterClick: () => void) {
   // Call the reusable animation function
   createLoadingAnimation(loadingIndicator);
   
-  // Initialize Three.js effect
-  initTextEffect(textEffectContainer);
+  // Initialize Three.js effect only for desktop
+  if (window.innerWidth >= 768) {
+    initTextEffect(textEffectContainer);
+  }
   
-  // Make sure to give the play button an ID for targeting in CSS
-  playButton.id = "splash-play-button";
+  // Setup responsive behavior
+  window.addEventListener('resize', () => {
+    if (window.innerWidth < 768) {
+      // Mobile view
+      if (textEffectContainer.style.display !== 'none') {
+        textEffectContainer.style.display = 'none';
+        simpleTitleContainer.style.display = 'block';
+      }
+    } else {
+      // Desktop view
+      if (simpleTitleContainer.style.display !== 'none') {
+        simpleTitleContainer.style.display = 'none';
+        textEffectContainer.style.display = 'flex';
+        
+        // Reinitialize Three.js effect if it wasn't initialized before
+        if (!textEffectContainer.querySelector('canvas')) {
+          initTextEffect(textEffectContainer);
+        }
+      }
+    }
+  });
   
   return splashContainer;
 }
