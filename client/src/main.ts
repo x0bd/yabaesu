@@ -248,7 +248,9 @@ socket.on("clear-canvas", () => {
 	resetUIVisibility();
 
 	// Ensure word display is hidden when canvas is cleared
-	wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+	if (wordDisplay) {
+		wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+	}
 	
 	// Make sure canvas background stays white
 	if (ctx) {
@@ -311,12 +313,15 @@ subscribe(
 subscribe(
 	(state) => state.currentWord,
 	(currentWordValue) => {
+		// Only manipulate the word display elements if they exist
+		if (!wordDisplay || !wordText) return;
+		
 		const { isMyTurn, turnType } = gameStore.getState(); // Get other relevant state parts
 
 		if (currentWordValue && isMyTurn && turnType === "draw") {
 			wordText.textContent = currentWordValue;
-			wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
-			wordDisplay.classList.add("active");
+			wordDisplay.style.cssText = "display: block !important"; // Ensure it's display: block
+			wordDisplay.classList.add("active"); // This moves it down with top: 10px
 
 			// Animation for appearing
 			gsap.fromTo(
@@ -335,7 +340,7 @@ subscribe(
 			});
 		} else {
 			// If the conditions are not met, hide it.
-			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+			wordDisplay.style.cssText = "display: none !important";
 			wordDisplay.classList.remove("active");
 		}
 	}
@@ -457,23 +462,25 @@ socket.on(
 					20
 				);
 
-				// Also create a pulsing effect on the word display element
-				wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
-				wordText.textContent = data.currentWord;
-				wordDisplay.classList.add("active");
+				// Also create a pulsing effect on the word display element if it exists
+				if (wordDisplay && wordText) {
+					wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
+					wordText.textContent = data.currentWord;
+					wordDisplay.classList.add("active");
 
-				// Add pulsing animation to make it more noticeable
-				gsap.timeline({ repeat: 3 })
-					.to(wordDisplay, {
-						scale: 1.05,
-						boxShadow: "0 0 12px rgba(0, 0, 0, 0.3)",
-						duration: 0.5,
-					})
-					.to(wordDisplay, {
-						scale: 1,
-						boxShadow: "4px 4px 0 #000",
-						duration: 0.5,
-					});
+					// Add pulsing animation to make it more noticeable
+					gsap.timeline({ repeat: 3 })
+						.to(wordDisplay, {
+							scale: 1.05,
+							boxShadow: "0 0 12px rgba(0, 0, 0, 0.3)",
+							duration: 0.5,
+						})
+						.to(wordDisplay, {
+							scale: 1,
+							boxShadow: "4px 4px 0 #000",
+							duration: 0.5,
+						});
+				}
 
 				// Show the word toast
 				showWordToast(data.currentWord);
@@ -672,7 +679,9 @@ function updateGameUI(state: {
 				canvas.style.pointerEvents = "none";
 				
 				// Ensure word display is hidden for guessers
-				wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+				if (wordDisplay) {
+					wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+				}
 				
 				// Remove finish drawing button if it exists
 				const finishButton = document.getElementById("finish-drawing-button");
@@ -685,18 +694,22 @@ function updateGameUI(state: {
 			turnIndicator.className = "turn-indicator bg-yellow-500 text-white px-4 py-1";
 			
 			// Ensure word display is hidden when waiting
-			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+			if (wordDisplay) {
+				wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+			}
 		}
 	}
 	
-	// Update word display - only show when actively drawing with a current word
-	if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
-		wordText.textContent = state.currentWord;
-		wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
-		wordDisplay.classList.add("active");
-	} else {
-		wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
-		wordDisplay.classList.remove("active");
+	// Update word display - only if element exists
+	if (wordDisplay && wordText) {
+		if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
+			wordText.textContent = state.currentWord;
+			wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
+			wordDisplay.classList.add("active");
+		} else {
+			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+			wordDisplay.classList.remove("active");
+		}
 	}
 	
 	// Update timer
@@ -1422,14 +1435,16 @@ function resetUIVisibility() {
 		leaderboardList.style.zIndex = "50";
 	}
 
-	// Word display visibility should depend on game state
-	const { currentWord, turnType, isMyTurn } = gameStore.getState();
-	if (currentWord && turnType === "draw" && isMyTurn) {
-		wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
-		wordDisplay.style.opacity = "1";
-		wordDisplay.style.zIndex = "100";
-	} else {
-		wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+	// Word display visibility should depend on game state - if element exists
+	if (wordDisplay) {
+		const { currentWord, turnType, isMyTurn } = gameStore.getState();
+		if (currentWord && turnType === "draw" && isMyTurn) {
+			wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
+			wordDisplay.style.opacity = "1";
+			wordDisplay.style.zIndex = "100";
+		} else {
+			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
+		}
 	}
 
 	debugLog("Reset UI element visibility");
