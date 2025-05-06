@@ -42,7 +42,6 @@ export function createSplashScreen(onEnterClick: () => void) {
   simpleTitleContainer.style.width = "100%";
   simpleTitleContainer.style.maxWidth = "100%";
   simpleTitleContainer.style.position = "relative";
-  simpleTitleContainer.style.display = "flex";
   simpleTitleContainer.style.flexDirection = "column";
   simpleTitleContainer.style.justifyContent = "center";
   simpleTitleContainer.style.alignItems = "center";
@@ -150,11 +149,6 @@ export function createSplashScreen(onEnterClick: () => void) {
   loadingIndicator.id = "minimal-loading-indicator";
   // Styling will be applied by createLoadingAnimation
   
-  // Add loading text 
-  const loadingTextElement = document.createElement("p");
-  loadingTextElement.className = "splash-loading-text";
-  loadingTextElement.textContent = "ready when you are";
-  
   // Create footer element with attribution
   const footer = document.createElement("div");
   footer.classList.add("splash-footer");
@@ -244,7 +238,6 @@ export function createSplashScreen(onEnterClick: () => void) {
   // Add elements to splash container
   buttonContainer.appendChild(playButton);
   buttonContainer.appendChild(loadingIndicator); // Add placeholder
-  buttonContainer.appendChild(loadingTextElement); // Text below the dots
   
   splashContainer.appendChild(textEffectContainer);
   splashContainer.appendChild(simpleTitleContainer); // Add simple title container
@@ -454,6 +447,17 @@ export function createSplashScreen(onEnterClick: () => void) {
       }
     }
   });
+  
+  // Ensure correct initial state based on screen size
+  if (window.innerWidth < 768) {
+    // Mobile view
+    textEffectContainer.style.display = 'none';
+    simpleTitleContainer.style.display = 'block';
+  } else {
+    // Desktop view
+    simpleTitleContainer.style.display = 'none';
+    textEffectContainer.style.display = 'flex';
+  }
   
   return splashContainer;
 }

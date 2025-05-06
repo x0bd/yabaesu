@@ -77,8 +77,8 @@ const turnIndicator = document.getElementById(
 // Update the wordDisplayLabel to "YOUR PREVIOUS WORD: "
 const wordDisplayLabel = document.querySelector(".word-display") as HTMLElement;
 if (wordDisplayLabel) {
-	wordDisplayLabel.innerHTML =
-		'YOUR PREVIOUS WORD: <span id="word-text"></span>';
+	// wordDisplayLabel.innerHTML =
+	// 	'YOUR PREVIOUS WORD: <span id="word-text"></span>';
 }
 
 // Drawing variables
