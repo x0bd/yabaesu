@@ -36,6 +36,9 @@ const waitingPlayersCount = document.getElementById(
 const leaveQueueButton = document.getElementById(
 	"leave-queue-button"
 ) as HTMLButtonElement;
+const playSoloButton = document.getElementById(
+	"play-solo-button"
+) as HTMLButtonElement;
 
 const canvas = document.getElementById("drawing-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -91,6 +94,23 @@ debugLog(`Socket connection initialized to ${serverUrl}`);
 // Global variable to hold the matchmaking animation tween
 let matchmakingLoadingTween: gsap.core.Tween | null = null;
 
+// Common words to use in solo mode
+const soloModeWords = [
+	"cat", "dog", "house", "car", "tree", "sun", "moon", "star", 
+	"book", "phone", "chair", "table", "door", "window", "computer",
+	"pizza", "burger", "coffee", "water", "apple", "banana", "beach",
+	"mountain", "river", "flower", "bird", "fish", "snake", "bear",
+	"smile", "love", "happy", "sad", "angry", "clock", "watch", "shoe",
+	"hat", "glasses", "camera", "music", "dance", "sing", "jump", "run",
+	"swim", "airplane", "train", "boat", "bicycle", "robot", "alien"
+];
+
+// Function to get a random word for solo mode
+function getRandomWord(): string {
+	const randomIndex = Math.floor(Math.random() * soloModeWords.length);
+	return soloModeWords[randomIndex];
+}
+
 // Subscribe to matchmaking state
 subscribe(
 	(state) => ({
@@ -145,6 +165,11 @@ socket.on("connected-users", (users: string[]) => {
 	}
 });
 
+socket.on("waiting-players-count", (count: number) => {
+	debugLog("Received waiting-players-count event", count);
+	gameStore.setState({ waitingPlayersCount: count });
+});
+
 socket.on("start-drawing-turn", () => {
 	debugLog("Received start-drawing-turn event");
 	gameStore.setState({
@@ -152,6 +177,7 @@ socket.on("start-drawing-turn", () => {
 		isDrawingEnabled: true,
 		isMyTurn: true,
 		turnType: "draw",
+		isSoloMode: false // Ensure we're not in solo mode
 	});
 	showGameScreen();
 });
@@ -164,6 +190,7 @@ socket.on("start-guessing-turn", () => {
 		isMyTurn: true,
 		turnType: "guess",
 		currentWord: null,
+		isSoloMode: false // Ensure we're not in solo mode
 	});
 	showGameScreen();
 });
@@ -486,6 +513,13 @@ socket.on(
 	}
 );
 
+// Acknowledgement for solo mode
+socket.on("solo-mode-started", () => {
+	debugLog("Received solo-mode-started acknowledgement");
+	// No action needed here as we've already set up the UI,
+	// but this confirms the server has updated its state
+});
+
 // UI update functions
 function updateMatchmakingUI(state: {
 	isInQueue: boolean;
@@ -522,77 +556,167 @@ function updateGameUI(state: {
 	turnType: "draw" | "guess" | null;
 	timeRemaining: number;
 }) {
-	if (state.isLoggedIn) {
-		loginContainer.style.display = "none";
-
-		// Only show the game container if we're in a game
-		if (state.turnType) {
-			gameContainer.style.display = "flex";
-			matchmakingContainer.style.display = "none";
+	debugLog("Updating game UI", state);
+	
+	// Update turn indicator
+	const turnIndicator = document.getElementById("turn-indicator");
+	if (turnIndicator) {
+		turnIndicator.style.display = "block";
+		
+		// Add quit solo mode button if in solo mode
+		const isSoloMode = gameStore.getState().isSoloMode;
+		if (isSoloMode) {
+			// Check if the button already exists
+			let quitSoloButton = document.getElementById("quit-solo-button");
+			if (!quitSoloButton) {
+				quitSoloButton = document.createElement("button");
+				quitSoloButton.id = "quit-solo-button";
+				quitSoloButton.className = "bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-none focus:outline-none mt-2 ml-4 uppercase transform-skew hover-scale";
+				quitSoloButton.style.boxShadow = "4px 4px 0 #000";
+				quitSoloButton.textContent = "Quit Solo Mode";
+				
+				// Add click event
+				quitSoloButton.addEventListener("click", () => {
+					// Clean up timer
+					if (soloModeTimerInterval) {
+						clearInterval(soloModeTimerInterval);
+						soloModeTimerInterval = null;
+					}
+					
+					// Reset state
+					gameStore.setState({
+						isInQueue: true,
+						roomId: null,
+						roomPlayers: [],
+						isSoloMode: false,
+						isDrawingEnabled: false,
+						isMyTurn: false,
+						turnType: null,
+						currentWord: null,
+						previousWord: null
+					});
+					
+					// Notify server (to get back in queue)
+					socket.emit("user-joined", gameStore.getState().username);
+					
+					// Show matchmaking screen
+					showMatchmakingScreen();
+				});
+				
+				// Find appropriate place to add it
+				const headerContainer = document.querySelector(".flex.justify-between.items-center");
+				if (headerContainer) {
+					headerContainer.appendChild(quitSoloButton);
+				}
+			}
+		} else {
+			// Remove quit solo button if it exists but not in solo mode
+			const quitSoloButton = document.getElementById("quit-solo-button");
+			if (quitSoloButton) {
+				quitSoloButton.remove();
+			}
+		}
+		
+		if (state.isMyTurn) {
+			if (state.turnType === "draw") {
+				turnIndicator.textContent = "YOUR TURN TO DRAW";
+				turnIndicator.className = "turn-indicator bg-blue-600 text-white px-4 py-1";
+				
+				// Make sure drawing is enabled
+				canvas.style.cursor = "crosshair";
+				canvas.style.pointerEvents = "auto";
+				
+				// Add the finish drawing button in solo mode
+				const isSoloMode = gameStore.getState().isSoloMode;
+				if (isSoloMode) {
+					// Check if the button already exists
+					let finishButton = document.getElementById("finish-drawing-button");
+					if (!finishButton) {
+						finishButton = document.createElement("button");
+						finishButton.id = "finish-drawing-button";
+						finishButton.className = "bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-none focus:outline-none mt-2 ml-4 uppercase transform-skew hover-scale";
+						finishButton.style.boxShadow = "4px 4px 0 #000";
+						finishButton.textContent = "Finish Drawing";
+						
+						// Add click event
+						finishButton.addEventListener("click", () => {
+							// Switch from drawing to guessing
+							gameStore.setState({
+								isDrawingEnabled: false,
+								turnType: "guess"
+							});
+							
+							// Update UI
+							updateGameUI({
+								...state,
+								isDrawingEnabled: false,
+								turnType: "guess"
+							});
+							
+							// Add system message
+							appendChatMessage({
+								username: "SYSTEM",
+								message: "You finished drawing! Now try to guess your own drawing in the chat.",
+								color: "#6d28d9"
+							});
+							
+							// Remove the button
+							if (finishButton) {
+								finishButton.remove();
+							}
+						});
+						
+						// Append near the turn indicator
+						if (turnIndicator.parentNode) {
+							turnIndicator.parentNode.appendChild(finishButton);
+						}
+					}
+				}
+			} else if (state.turnType === "guess") {
+				turnIndicator.textContent = "YOUR TURN TO GUESS";
+				turnIndicator.className = "turn-indicator bg-green-600 text-white px-4 py-1";
+				
+				// Make sure drawing is disabled
+				canvas.style.cursor = "default";
+				canvas.style.pointerEvents = "none";
+				
+				// Ensure word display is hidden for guessers
+				wordDisplay.style.display = "none";
+				
+				// Remove finish drawing button if it exists
+				const finishButton = document.getElementById("finish-drawing-button");
+				if (finishButton) {
+					finishButton.remove();
+				}
+			}
+		} else {
+			turnIndicator.textContent = "WAITING FOR OPPONENT";
+			turnIndicator.className = "turn-indicator bg-yellow-500 text-white px-4 py-1";
+			
+			// Ensure word display is hidden when waiting
+			wordDisplay.style.display = "none";
 		}
 	}
-
-	// Make the turnIndicator visible and ensure it has the right style
-	turnIndicator.classList.remove("hidden");
-	turnIndicator.style.display = "block";
-	turnIndicator.style.position = "absolute";
-	turnIndicator.style.zIndex = "100";
-
-	// Update turn indicator
-	if (state.turnType === "draw") {
-		turnIndicator.textContent = "YOUR TURN TO DRAW";
-		turnIndicator.style.backgroundColor = "#fde047"; // Yellow
-		debugLog("Updated UI for drawing turn");
-
-		// Make sure drawing is enabled
-		canvas.style.cursor = "crosshair";
-		canvas.style.pointerEvents = "auto";
-	} else if (state.turnType === "guess") {
-		turnIndicator.textContent = "YOUR TURN TO GUESS";
-		turnIndicator.style.backgroundColor = "#93c5fd"; // Blue
-		debugLog("Updated UI for guessing turn");
-
-		// Make sure drawing is disabled
-		canvas.style.cursor = "default";
-		canvas.style.pointerEvents = "none";
-
-		// Ensure word display is hidden for guessers
-		wordDisplay.style.display = "none";
-	} else {
-		turnIndicator.textContent = "WAITING FOR PLAYERS";
-		turnIndicator.style.backgroundColor = "#e5e7eb"; // Gray
-		debugLog("Updated UI for waiting state");
-
-		// Ensure word display is hidden when waiting
-		wordDisplay.style.display = "none";
-	}
-
-	// Only show the word display if currently drawing
-	if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
-		wordDisplay.style.display = "block";
-		wordDisplay.style.position = "absolute";
-		wordDisplay.style.zIndex = "100";
+	
+	// Update word display
+	if (state.currentWord && state.turnType === "draw") {
 		wordText.textContent = state.currentWord;
-		debugLog("Displayed word for drawing turn", state.currentWord);
+		wordDisplay.style.display = "block";
+		wordDisplay.classList.add("active");
 	} else {
 		wordDisplay.style.display = "none";
-		debugLog("Hiding word display");
+		wordDisplay.classList.remove("active");
 	}
-
+	
 	// Update timer
 	timerDisplay.textContent = `TIME: ${state.timeRemaining}`;
-	timerDisplay.style.zIndex = "50";
-	debugLog("Updated timer display", state.timeRemaining);
-
-	// Ensure chat container is visible
-	const chatContainer = document.getElementById("chat-container");
-	if (chatContainer) {
-		chatContainer.style.zIndex = "50";
-		chatContainer.style.position = "relative";
+	
+	// Add urgency to timer when low
+	if (state.timeRemaining <= 10) {
+		timerDisplay.classList.add("timer-urgent");
+	} else {
+		timerDisplay.classList.remove("timer-urgent");
 	}
-
-	// Ensure canvas has the right style
-	canvas.style.zIndex = "10";
 }
 
 function showMatchmakingScreen() {
@@ -665,6 +789,12 @@ function showLoginScreen() {
 		matchmakingLoadingTween.kill();
 		matchmakingLoadingTween = null;
 	}
+	
+	// Clean up solo mode timer if running
+	if (soloModeTimerInterval) {
+		clearInterval(soloModeTimerInterval);
+		soloModeTimerInterval = null;
+	}
 
 	// Animate the login screen appearance
 	gsap.fromTo(
@@ -698,6 +828,168 @@ leaveQueueButton.addEventListener("click", () => {
 	gameStore.setState({ isInQueue: false, roomId: null, roomPlayers: [] });
 	showLoginScreen(); // This already handles killing the animation
 });
+
+// Add event listener for Play Against Yourself button
+playSoloButton.addEventListener("click", () => {
+	debugLog("Play against yourself button clicked");
+	socket.emit("play-solo");
+	gameStore.setState({ 
+		isInQueue: false, 
+		roomId: "solo-" + Date.now(), 
+		roomPlayers: [gameStore.getState().username as string],
+		isSoloMode: true
+	});
+	showGameScreen();
+	
+	// Create a nicer notification explaining solo mode
+	displayNotification("Solo Practice Mode Activated! Draw and guess by yourself!", "#6d28d9", 5);
+	
+	// Start the drawing turn automatically
+	gameStore.setState({
+		isDrawingEnabled: true,
+		isMyTurn: true,
+		turnType: "draw",
+		timeRemaining: 100,
+		currentWord: getRandomWord()
+	});
+	
+	// Set up the UI for drawing
+	const word = gameStore.getState().currentWord;
+	if (word) {
+		updateGameUI({
+			isLoggedIn: true,
+			isDrawingEnabled: true,
+			currentWord: word,
+			isMyTurn: true,
+			turnType: "draw",
+			timeRemaining: 100
+		});
+		
+		// Show the word to draw
+		showWordToast(word);
+	}
+	
+	// Add a helpful system message explaining solo mode
+	appendChatMessage({
+		username: "SYSTEM",
+		message: "Welcome to Solo Practice Mode! Draw the word shown, then try to guess it in the chat when you're done.",
+		color: "#6d28d9"
+	});
+	
+	// Start the timer for solo mode
+	startSoloModeTimer();
+});
+
+// Variable to hold the solo mode timer interval
+let soloModeTimerInterval: number | null = null;
+
+// Function to start the timer for solo mode
+function startSoloModeTimer() {
+	// Clear any existing timer
+	if (soloModeTimerInterval) {
+		clearInterval(soloModeTimerInterval);
+	}
+	
+	// Initial time
+	let timeRemaining = 100;
+	
+	// Update the UI with the initial time
+	updateGameUI({
+		...gameStore.getState(),
+		timeRemaining
+	});
+	
+	// Start the timer interval
+	soloModeTimerInterval = window.setInterval(() => {
+		timeRemaining--;
+		
+		// Update game state
+		gameStore.setState({
+			timeRemaining
+		});
+		
+		// Update UI
+		updateGameUI({
+			...gameStore.getState(),
+			timeRemaining
+		});
+		
+		// Check if time is up
+		if (timeRemaining <= 0) {
+			clearInterval(soloModeTimerInterval as number);
+			soloModeTimerInterval = null;
+			
+			const state = gameStore.getState();
+			
+			// Handle time up based on current turn type
+			if (state.turnType === "draw") {
+				// Force switch to guessing
+				gameStore.setState({
+					isDrawingEnabled: false,
+					turnType: "guess"
+				});
+				
+				// Update UI
+				updateGameUI({
+					...state,
+					isDrawingEnabled: false,
+					turnType: "guess",
+					timeRemaining: 0
+				});
+				
+				// Show notification
+				displayNotification("Time's up! Now try to guess your drawing.", "#6d28d9", 3);
+				
+				// Add message
+				appendChatMessage({
+					username: "SYSTEM",
+					message: "Drawing time is up! Now try to guess your own drawing in the chat.",
+					color: "#6d28d9"
+				});
+				
+				// Start a new timer for guessing
+				timeRemaining = 60;
+				startSoloModeTimer();
+			} else if (state.turnType === "guess") {
+				// Switch back to drawing with a new word
+				const newWord = getRandomWord();
+				
+				// Show what the word was
+				appendChatMessage({
+					username: "SYSTEM",
+					message: `Time's up! The word was "${state.currentWord}". Starting new round.`,
+					color: "#ef4444"
+				});
+				
+				// Switch to drawing
+				gameStore.setState({
+					isDrawingEnabled: true,
+					turnType: "draw",
+					currentWord: newWord
+				});
+				
+				// Clear canvas
+				clearCanvas();
+				
+				// Update UI
+				updateGameUI({
+					...state,
+					isDrawingEnabled: true,
+					turnType: "draw",
+					currentWord: newWord,
+					timeRemaining: 0
+				});
+				
+				// Show new word
+				showWordToast(newWord);
+				
+				// Start a new timer for drawing
+				timeRemaining = 100;
+				startSoloModeTimer();
+			}
+		}
+	}, 1000);
+}
 
 if (ctx) {
 	ctx.lineWidth = 3;
@@ -763,10 +1055,66 @@ sendChatButton.addEventListener("click", () => {
 	const message = chatInput.value.trim();
 	if (message) {
 		debugLog("Sending chat message from button click", message);
-		socket.emit("chat-message", {
-			username: gameStore.getState().username,
-			message: message,
-		});
+		
+		// In solo mode, check if the message matches the current word
+		const state = gameStore.getState();
+		if (state.isSoloMode && state.currentWord) {
+			const normalizedGuess = message.toLowerCase().trim();
+			const normalizedWord = state.currentWord.toLowerCase().trim();
+			
+			if (normalizedGuess === normalizedWord) {
+				// Correct guess
+				appendChatMessage({
+					username: "SYSTEM",
+					message: `🎉 Correct! The word was "${state.currentWord}"`,
+					color: "#16a34a" // Green
+				});
+				
+				// Show success notification
+				displayNotification("Correct guess! You win!", "#16a34a", 3);
+				
+				// Save previous word and generate a new one
+				const previousWord = state.currentWord;
+				const newWord = getRandomWord();
+				
+				// Switch roles (from guessing to drawing)
+				gameStore.setState({
+					previousWord: previousWord,
+					currentWord: newWord,
+					isDrawingEnabled: true,
+					turnType: "draw",
+					timeRemaining: 100
+				});
+				
+				// Clear the canvas for the next round
+				clearCanvas();
+				
+				// Show the new word toast
+				showWordToast(newWord);
+				
+				// Give instructions for next round
+				setTimeout(() => {
+					appendChatMessage({
+						username: "SYSTEM",
+						message: "New round started! Draw the new word shown above.",
+						color: "#6d28d9"
+					});
+				}, 1000);
+			} else {
+				// Normal chat message in solo mode
+				appendChatMessage({
+					username: state.username || "You",
+					message: message
+				});
+			}
+		} else {
+			// Normal multiplayer chat message
+			socket.emit("chat-message", {
+				username: state.username,
+				message: message,
+			});
+		}
+		
 		chatInput.value = "";
 
 		// Small animation feedback for sending message
@@ -783,10 +1131,66 @@ chatInput.addEventListener("keypress", (event) => {
 		const message = chatInput.value.trim();
 		if (message) {
 			debugLog("Sending chat message from Enter key", message);
-			socket.emit("chat-message", {
-				username: gameStore.getState().username,
-				message: message,
-			});
+			
+			// In solo mode, check if the message matches the current word
+			const state = gameStore.getState();
+			if (state.isSoloMode && state.currentWord) {
+				const normalizedGuess = message.toLowerCase().trim();
+				const normalizedWord = state.currentWord.toLowerCase().trim();
+				
+				if (normalizedGuess === normalizedWord) {
+					// Correct guess
+					appendChatMessage({
+						username: "SYSTEM",
+						message: `🎉 Correct! The word was "${state.currentWord}"`,
+						color: "#16a34a" // Green
+					});
+					
+					// Show success notification
+					displayNotification("Correct guess! You win!", "#16a34a", 3);
+					
+					// Save previous word and generate a new one
+					const previousWord = state.currentWord;
+					const newWord = getRandomWord();
+					
+					// Switch roles (from guessing to drawing)
+					gameStore.setState({
+						previousWord: previousWord,
+						currentWord: newWord,
+						isDrawingEnabled: true,
+						turnType: "draw",
+						timeRemaining: 100
+					});
+					
+					// Clear the canvas for the next round
+					clearCanvas();
+					
+					// Show the new word toast
+					showWordToast(newWord);
+					
+					// Give instructions for next round
+					setTimeout(() => {
+						appendChatMessage({
+							username: "SYSTEM",
+							message: "New round started! Draw the new word shown above.",
+							color: "#6d28d9"
+						});
+					}, 1000);
+				} else {
+					// Normal chat message in solo mode
+					appendChatMessage({
+						username: state.username || "You",
+						message: message
+					});
+				}
+			} else {
+				// Normal multiplayer chat message
+				socket.emit("chat-message", {
+					username: state.username,
+					message: message,
+				});
+			}
+			
 			chatInput.value = "";
 
 			// Small animation feedback for sending message

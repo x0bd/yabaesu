@@ -8,7 +8,7 @@ interface Player {
 }
 
 // Add userColors to the state
-interface GameState {
+export interface GameState {
 	// User state
 	username: string | null;
 	isLoggedIn: boolean;
@@ -35,6 +35,9 @@ interface GameState {
 
 	// Socket connection
 	socket: Socket | null;
+
+	// Solo mode
+	isSoloMode: boolean;
 }
 
 interface GameActions {
@@ -95,6 +98,7 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 	leaderboard: [],
 	userColors: new Map(),
 	socket: null,
+	isSoloMode: false,
 
 	// Actions
 	login: (username) => {

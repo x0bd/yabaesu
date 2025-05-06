@@ -190,6 +190,24 @@ io.on("connection", (socket) => {
 			}
 		}
 	});
+
+	// Handle solo mode activation
+	socket.on("play-solo", () => {
+		const username = connectedUsers.get(socket.id);
+		if (username) {
+			debugLog(`User ${username} started solo mode`);
+			
+			// Remove from waiting players if they're in it
+			const waitingIndex = waitingPlayers.indexOf(socket.id);
+			if (waitingIndex !== -1) {
+				waitingPlayers.splice(waitingIndex, 1);
+				emitWaitingPlayersCount();
+			}
+			
+			// Acknowledge to the client
+			socket.emit("solo-mode-started");
+		}
+	});
 });
 
 function assignUserColor(username: string) {
