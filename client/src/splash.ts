@@ -132,16 +132,95 @@ export function createSplashScreen(onEnterClick: () => void) {
     playButton.style.boxShadow = "6px 6px 0 #ef4444";
   };
   
-  // Add click event to transition to login screen
+  // Add click event to transition to login screen or show mobile warning
   playButton.onclick = () => {
-    gsap.to(splashContainer, {
-      opacity: 0,
-      duration: 0.5,
-      onComplete: () => {
-        splashContainer.remove();
-        onEnterClick(); // Call the callback function
+    // Check if it's a mobile device
+    if (window.innerWidth < 768) {
+      // For mobile devices, show enhanced warning instead of continuing
+      let mobileBlocker = document.querySelector('.mobile-blocker') as HTMLElement;
+      
+      // Create the mobile blocker if it doesn't exist
+      if (!mobileBlocker) {
+        mobileBlocker = document.createElement('div');
+        mobileBlocker.className = 'mobile-blocker';
+        mobileBlocker.style.position = 'fixed';
+        mobileBlocker.style.top = '0';
+        mobileBlocker.style.left = '0';
+        mobileBlocker.style.width = '100%';
+        mobileBlocker.style.height = '100%';
+        mobileBlocker.style.backgroundColor = 'rgba(239, 68, 68, 0.95)';
+        mobileBlocker.style.zIndex = '10001';
+        mobileBlocker.style.display = 'flex';
+        mobileBlocker.style.flexDirection = 'column';
+        mobileBlocker.style.justifyContent = 'center';
+        mobileBlocker.style.alignItems = 'center';
+        mobileBlocker.style.textAlign = 'center';
+        mobileBlocker.style.padding = '20px';
+        mobileBlocker.style.color = 'white';
+        mobileBlocker.style.fontFamily = "'Geist Mono', monospace";
+        mobileBlocker.style.opacity = '0';
+        mobileBlocker.style.transform = 'translateY(20px)';
+        
+        // Add content
+        mobileBlocker.innerHTML = `
+          <h2 style="font-size: 24px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">Mobile Not Supported</h2>
+          <div style="width: 50px; height: 4px; background-color: white; margin: 15px auto;"></div>
+          <p style="font-size: 16px; margin-bottom: 20px; line-height: 1.5;">
+            This game requires a larger screen for the best experience.<br>
+            Please use a tablet or computer to play.
+          </p>
+          <button id="mobile-back-button" style="
+            background-color: white;
+            color: #ef4444;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #000;
+            margin-top: 20px;
+            text-transform: uppercase;
+          ">Go Back</button>
+        `;
+        
+        document.body.appendChild(mobileBlocker);
+        
+        // Add event listener to the back button
+        const backButton = document.getElementById('mobile-back-button');
+        if (backButton) {
+          backButton.addEventListener('click', () => {
+            // Animate out and remove
+            gsap.to(mobileBlocker, {
+              opacity: 0,
+              y: 20,
+              duration: 0.3,
+              onComplete: () => {
+                mobileBlocker.remove();
+              }
+            });
+          });
+        }
       }
-    });
+      
+      // Show the blocker with animation
+      gsap.to(mobileBlocker, {
+        opacity: 1,
+        y: 0,
+        duration: 0.4,
+        ease: "power2.out"
+      });
+      
+    } else {
+      // For desktop, proceed normally
+      gsap.to(splashContainer, {
+        opacity: 0,
+        duration: 0.5,
+        onComplete: () => {
+          splashContainer.remove();
+          onEnterClick(); // Call the callback function
+        }
+      });
+    }
   };
   
   // Create NEW minimal loading indicator element (placeholder)
