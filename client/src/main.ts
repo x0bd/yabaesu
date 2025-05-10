@@ -95,13 +95,27 @@ let matchmakingLoadingTween: gsap.core.Tween | null = null;
 
 // Common words to use in solo mode
 const soloModeWords = [
-	"cat", "dog", "house", "car", "tree", "sun", "moon", "star", 
-	"book", "phone", "chair", "table", "door", "window", "computer",
-	"pizza", "burger", "coffee", "water", "apple", "banana", "beach",
-	"mountain", "river", "flower", "bird", "fish", "snake", "bear",
-	"smile", "love", "happy", "sad", "angry", "clock", "watch", "shoe",
-	"hat", "glasses", "camera", "music", "dance", "sing", "jump", "run",
-	"swim", "airplane", "train", "boat", "bicycle", "robot", "alien"
+	// Animals
+	"cat", "dog", "bird", "fish", "snake", "bear", "lion", "tiger", "elephant", "monkey",
+	"horse", "cow", "pig", "sheep", "duck", "chicken", "frog", "owl", "bee", "ant", "spider",
+	"butterfly", "snail", "crab", "whale", "shark", "octopus", "giraffe", "zebra", "penguin",
+
+	// Food
+	"apple", "banana", "orange", "grape", "strawberry", "pizza", "burger", "cake", "ice cream",
+	"cookie", "bread", "cheese", "egg", "corn", "carrot", "broccoli", "sushi", "donut", "hot dog",
+
+	// Objects
+	"house", "car", "tree", "sun", "moon", "star", "book", "phone", "chair", "table", "door",
+	"window", "computer", "cup", "key", "clock", "watch", "shoe", "hat", "glasses", "camera",
+	"pencil", "pen", "ball", "balloon", "boat", "train", "airplane", "bicycle", "robot", "alien",
+	"box", "drum", "guitar", "lamp", "sock", "shirt", "pants", "bed", "kite", "ladder", "shovel",
+	"hammer", "nail", "screw", "button", "zipper", "coin", "flag", "map", "present", "candle",
+
+	// Nature
+	"flower", "cloud", "rain", "snow", "rainbow", "leaf", "rock", "fire", "mountain", "river",
+
+	// Simple Shapes/Concepts (can be components of other drawings)
+	"circle", "square", "triangle", "heart", "arrow", "line", "dot"
 ];
 
 // Function to get a random word for solo mode

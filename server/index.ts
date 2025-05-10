@@ -57,16 +57,10 @@ const colorOptions = [
 
 // --- Word List ---
 const words = [
-	"fish",
-	"bread",
-	"sun",
-	"key",
-	"book",
-	"cat",
-	"flower",
-	"moon",
-	"cup",
-	"tree",
+	"fish", "bread", "sun", "key", "book", "cat", "flower", "moon", "cup", "tree",
+	"dog", "house", "car", "star", "door", "ball", "apple", "banana", "hat", "shoe",
+	"boat", "bird", "cloud", "ghost", "chair", "table", "pencil", "clock", "snake", "cake",
+	"bridge", "worm", "heart", "smile", "eye", "nose", "mouth", "ear", "hand", "foot"
 ];
 
 // Serve static files
