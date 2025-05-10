@@ -781,13 +781,6 @@ function updateGameUI(state: {
 		// Hide score display if not in solo mode
 		scoreDisplay.style.display = "none";
 	}
-
-	// Update drawing controls
-	if (state.isDrawingEnabled) {
-		enableDrawing();
-	} else {
-		disableDrawing();
-	}
 	
 	// Update timer
 	timerDisplay.textContent = `TIME: ${state.timeRemaining}`;
