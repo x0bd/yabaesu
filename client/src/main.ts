@@ -147,6 +147,8 @@ subscribe(
 		isMyTurn: state.isMyTurn,
 		turnType: state.turnType,
 		timeRemaining: state.timeRemaining,
+		isSoloMode: state.isSoloMode,
+		soloScore: state.soloScore,
 	}),
 	(state) => {
 		debugLog("Game state updated", state);
@@ -362,6 +364,27 @@ subscribe(
 
 // We're removing the previous word subscription since we don't need it anymore
 
+// Add a solo score subscription to update UI when solo score changes
+subscribe(
+	(state) => state.soloScore,
+	(score) => {
+		if (score > 0) {
+			// Update the score display if it exists
+			const scoreDisplay = document.getElementById("solo-score-display");
+			if (scoreDisplay) {
+				scoreDisplay.textContent = `Score: ${score}`;
+				
+				// Animate the score display
+				gsap.fromTo(
+					scoreDisplay,
+					{ scale: 1.2, color: "#16a34a" },
+					{ scale: 1.0, color: "#000000", duration: 0.5 }
+				);
+			}
+		}
+	}
+);
+
 // Define the leaderboard entry type
 interface LeaderboardEntry {
 	username: string;
@@ -567,6 +590,8 @@ function updateGameUI(state: {
 	isMyTurn: boolean;
 	turnType: "draw" | "guess" | null;
 	timeRemaining: number;
+	isSoloMode?: boolean;
+	soloScore?: number;
 }) {
 	debugLog("Updating game UI", state);
 	
@@ -714,16 +739,54 @@ function updateGameUI(state: {
 		}
 	}
 	
-	// Update word display - only if element exists
+	// Show the word if we're drawing
 	if (wordDisplay && wordText) {
-		if (state.currentWord && state.turnType === "draw" && state.isMyTurn) {
+		if (state.currentWord && state.isDrawingEnabled) {
 			wordText.textContent = state.currentWord;
-			wordDisplay.style.cssText = "display: block !important"; // Override the !important CSS
-			wordDisplay.classList.add("active");
+			wordDisplay.style.display = "block";
 		} else {
-			wordDisplay.style.cssText = "display: none !important"; // Keep it hidden
-			wordDisplay.classList.remove("active");
+			wordDisplay.style.display = "none";
 		}
+	}
+	
+	// Show solo score if in solo mode
+	const scoreDisplay = document.getElementById("solo-score-display");
+	if (state.isSoloMode && typeof state.soloScore === 'number') {
+		// Create score display if it doesn't exist
+		if (!scoreDisplay) {
+			const newScoreDisplay = document.createElement("div");
+			newScoreDisplay.id = "solo-score-display";
+			newScoreDisplay.className = "score-display";
+			newScoreDisplay.innerHTML = `<span>Score: ${state.soloScore}</span>`;
+			
+			// Style the score display
+			newScoreDisplay.style.position = "fixed";
+			newScoreDisplay.style.top = "70px";
+			newScoreDisplay.style.right = "20px";
+			newScoreDisplay.style.backgroundColor = "#6d28d9";
+			newScoreDisplay.style.color = "white";
+			newScoreDisplay.style.padding = "8px 12px";
+			newScoreDisplay.style.borderRadius = "8px";
+			newScoreDisplay.style.fontWeight = "bold";
+			newScoreDisplay.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+			newScoreDisplay.style.zIndex = "100";
+			
+			document.body.appendChild(newScoreDisplay);
+		} else {
+			// Update existing score display
+			scoreDisplay.innerHTML = `<span>Score: ${state.soloScore}</span>`;
+			scoreDisplay.style.display = "block";
+		}
+	} else if (scoreDisplay) {
+		// Hide score display if not in solo mode
+		scoreDisplay.style.display = "none";
+	}
+
+	// Update drawing controls
+	if (state.isDrawingEnabled) {
+		enableDrawing();
+	} else {
+		disableDrawing();
 	}
 	
 	// Update timer
@@ -1081,27 +1144,38 @@ sendChatButton.addEventListener("click", () => {
 			const normalizedWord = state.currentWord.toLowerCase().trim();
 			
 			if (normalizedGuess === normalizedWord) {
+				// Increment solo score
+				const currentScore = state.soloScore + 1;
+				
 				// Correct guess
 				appendChatMessage({
 					username: "SYSTEM",
-					message: `🎉 Correct! The word was "${state.currentWord}"`,
+					message: `🎉 Correct! The word was "${state.currentWord}" (+1 point)`,
 					color: "#16a34a" // Green
 				});
 				
-				// Show success notification
-				displayNotification("Correct guess! You win!", "#16a34a", 3);
+				// Display score
+				appendChatMessage({
+					username: "SYSTEM",
+					message: `Your score: ${currentScore} point${currentScore !== 1 ? 's' : ''}`,
+					color: "#6d28d9" // Purple
+				});
+				
+				// Show success notification with score
+				displayNotification(`Correct guess! +1 point (Total: ${currentScore})`, "#16a34a", 3);
 				
 				// Save previous word and generate a new one
 				const previousWord = state.currentWord;
 				const newWord = getRandomWord();
 				
-				// Switch roles (from guessing to drawing)
+				// Switch roles (from guessing to drawing) and update score
 				gameStore.setState({
 					previousWord: previousWord,
 					currentWord: newWord,
 					isDrawingEnabled: true,
 					turnType: "draw",
-					timeRemaining: 100
+					timeRemaining: 100,
+					soloScore: currentScore
 				});
 				
 				// Clear the canvas for the next round
@@ -1157,27 +1231,38 @@ chatInput.addEventListener("keypress", (event) => {
 				const normalizedWord = state.currentWord.toLowerCase().trim();
 				
 				if (normalizedGuess === normalizedWord) {
+					// Increment solo score
+					const currentScore = state.soloScore + 1;
+					
 					// Correct guess
 					appendChatMessage({
 						username: "SYSTEM",
-						message: `🎉 Correct! The word was "${state.currentWord}"`,
+						message: `🎉 Correct! The word was "${state.currentWord}" (+1 point)`,
 						color: "#16a34a" // Green
 					});
 					
-					// Show success notification
-					displayNotification("Correct guess! You win!", "#16a34a", 3);
+					// Display score
+					appendChatMessage({
+						username: "SYSTEM",
+						message: `Your score: ${currentScore} point${currentScore !== 1 ? 's' : ''}`,
+						color: "#6d28d9" // Purple
+					});
+					
+					// Show success notification with score
+					displayNotification(`Correct guess! +1 point (Total: ${currentScore})`, "#16a34a", 3);
 					
 					// Save previous word and generate a new one
 					const previousWord = state.currentWord;
 					const newWord = getRandomWord();
 					
-					// Switch roles (from guessing to drawing)
+					// Switch roles (from guessing to drawing) and update score
 					gameStore.setState({
 						previousWord: previousWord,
 						currentWord: newWord,
 						isDrawingEnabled: true,
 						turnType: "draw",
-						timeRemaining: 100
+						timeRemaining: 100,
+						soloScore: currentScore
 					});
 					
 					// Clear the canvas for the next round

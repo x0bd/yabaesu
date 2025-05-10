@@ -38,6 +38,7 @@ export interface GameState {
 
 	// Solo mode
 	isSoloMode: boolean;
+	soloScore: number;
 }
 
 interface GameActions {
@@ -99,6 +100,7 @@ export const gameStore = createStore<GameState & GameActions>()((set, get) => ({
 	userColors: new Map(),
 	socket: null,
 	isSoloMode: false,
+	soloScore: 0,
 
 	// Actions
 	login: (username) => {
