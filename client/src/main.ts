@@ -763,12 +763,13 @@ function updateGameUI(state: {
 			newScoreDisplay.style.position = "fixed";
 			newScoreDisplay.style.top = "70px";
 			newScoreDisplay.style.right = "20px";
-			newScoreDisplay.style.backgroundColor = "#6d28d9";
+			newScoreDisplay.style.backgroundColor = "#6d28d9"; // Keeping purple for distinction
 			newScoreDisplay.style.color = "white";
 			newScoreDisplay.style.padding = "8px 12px";
-			newScoreDisplay.style.borderRadius = "8px";
+			newScoreDisplay.style.borderRadius = "0px"; // Sharp corners
 			newScoreDisplay.style.fontWeight = "bold";
-			newScoreDisplay.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+			newScoreDisplay.style.boxShadow = "4px 4px 0 #000"; // Brutalist box shadow
+			newScoreDisplay.style.border = "2px solid #000"; // Adding a border to match other elements
 			newScoreDisplay.style.zIndex = "100";
 			
 			document.body.appendChild(newScoreDisplay);
